@@ -1,147 +1,84 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Terminal, Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Calendar, Tag, ArrowRight, Shield, Flag } from "lucide-react";
+import { Post } from "@/lib/types";
+import { formatDate } from "@/lib/content";
 
-const navLinks = [
-  { href: "/", label: "~/home" },
-  { href: "/writeups", label: "~/writeups" },
-  { href: "/research", label: "~/research" },
-  { href: "/about", label: "~/about" },
-];
+interface PostCardProps {
+  post: Post;
+}
 
-export function Header() {
-  const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+export function PostCard({ post }: PostCardProps) {
+  const isCtf = post.category === "ctf";
 
   return (
-    <header
-      className={`sticky top-0 z-50 border-b transition-all duration-300 ${
-        scrolled
-          ? "border-border bg-background/95 backdrop-blur-lg shadow-lg shadow-black/5"
-          : "border-transparent bg-transparent"
-      }`}
-    >
-      <div className="mx-auto max-w-5xl px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="group flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-primary/50 bg-primary/10 transition-all duration-300 group-hover:border-primary group-hover:bg-primary/20 group-hover:scale-110">
-              <Terminal className="h-5 w-5 text-primary transition-transform duration-300 group-hover:rotate-12" />
-              {/* Corner accents */}
-              <div className="absolute -left-0.5 -top-0.5 h-2 w-2 border-l border-t border-primary/50 transition-all duration-300 group-hover:border-primary" />
-              <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 border-b border-r border-primary/50 transition-all duration-300 group-hover:border-primary" />
+    <div className="hover-lift group relative overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5">
+      {/* Category badge */}
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
+        {isCtf ? (
+          <Flag className="h-3 w-3 text-primary" />
+        ) : (
+          <Shield className="h-3 w-3 text-cyan-400" />
+        )}
+        <span className={isCtf ? "text-primary" : "text-cyan-400"}>
+          {post.category}
+        </span>
+      </div>
+
+      <Link href={`/${post.category === "ctf" ? "writeups" : "research"}/${post.slug}`} className="block">
+        <div className="p-6">
+          {/* Metadata */}
+          <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              <span>{formatDate(post.date)}</span>
             </div>
-            <span className="text-lg font-semibold tracking-tight">
-              <span className="text-primary transition-all duration-300 group-hover:text-shadow-glow">0x</span>
-              <span className="transition-colors duration-300 group-hover:text-primary">Blog</span>
-            </span>
-          </Link>
+            {post.difficulty && (
+              <div className="flex items-center gap-1">
+                <span className={`h-1.5 w-1.5 rounded-full ${post.difficulty === "Easy" ? "bg-emerald-400" :
+                    post.difficulty === "Medium" ? "bg-amber-400" : "bg-red-400"
+                  }`} />
+                <span>{post.difficulty}</span>
+              </div>
+            )}
+            {post.platform && (
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground/30">|</span>
+                <span>{post.platform}</span>
+              </div>
+            )}
+          </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:block">
-            <ul className="flex items-center gap-1">
-              {navLinks.map((link) => {
-                const isActive =
-                  pathname === link.href ||
-                  (link.href !== "/" && pathname.startsWith(link.href));
-                return (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className={`relative rounded-lg px-4 py-2 text-sm transition-all duration-300 ${
-                        isActive
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {/* Active indicator */}
-                      {isActive && (
-                        <span className="absolute inset-0 rounded-lg bg-primary/10 animate-fade-scale-in" />
-                      )}
-                      {/* Hover effect */}
-                      <span className="absolute inset-0 rounded-lg bg-secondary opacity-0 transition-opacity hover:opacity-100" />
-                      <span className="relative">{link.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          {/* Title */}
+          <h3 className="mb-3 text-xl font-bold transition-colors group-hover:text-primary leading-tight">
+            {post.title}
+          </h3>
 
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            className="relative rounded-lg p-2 text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            <span
-              className={`block transition-all duration-300 ${
-                mobileMenuOpen ? "rotate-180 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-              }`}
-            >
-              <Menu className="h-5 w-5" />
-            </span>
-            <span
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                mobileMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-180 scale-0 opacity-0"
-              }`}
-            >
-              <X className="h-5 w-5" />
-            </span>
-          </button>
-        </div>
+          {/* Summary */}
+          <p className="mb-6 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+            {post.summary}
+          </p>
 
-        {/* Mobile Navigation */}
-        <div
-          className={`grid transition-all duration-300 md:hidden ${
-            mobileMenuOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-          <div className="overflow-hidden">
-            <nav className="mt-4 border-t border-border pt-4">
-              <ul className="flex flex-col gap-1">
-                {navLinks.map((link, index) => {
-                  const isActive =
-                    pathname === link.href ||
-                    (link.href !== "/" && pathname.startsWith(link.href));
-                  return (
-                    <li
-                      key={link.href}
-                      className="animate-type-in"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <Link
-                        href={link.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-300 ${
-                          isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        }`}
-                      >
-                        <span className="text-primary">{">"}</span>
-                        {link.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
+          {/* Footer UI */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+              {post.tags.slice(0, 2).map((tag) => (
+                <span key={tag} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Tag className="h-2.5 w-2.5" />
+                  {tag}
+                </span>
+              ))}
+              {post.tags.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{post.tags.length - 2}</span>
+              )}
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary transition-all duration-300 group-hover:border-primary/50 group-hover:bg-primary/10 group-hover:text-primary group-hover:translate-x-1">
+              <ArrowRight className="h-4 w-4" />
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </Link>
+    </div>
   );
 }

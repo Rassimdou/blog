@@ -1,5 +1,5 @@
 export interface ContentBlock {
-  type: "heading" | "paragraph" | "code" | "flag" | "image";
+  type: "heading" | "paragraph" | "code" | "flag" | "image" | "note";
   level?: number;
   text?: string;
   language?: string;

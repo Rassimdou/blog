@@ -1,147 +1,93 @@
 "use client";
 
+import { Calendar, Tag, Shield, Flag, ChevronLeft, Clock } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Terminal, Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Post } from "@/lib/types";
+import { formatDate } from "@/lib/content";
+import { AnimatedWrapper } from "./animated-wrapper";
 
-const navLinks = [
-  { href: "/", label: "~/home" },
-  { href: "/writeups", label: "~/writeups" },
-  { href: "/research", label: "~/research" },
-  { href: "/about", label: "~/about" },
-];
+interface PostHeaderProps {
+  post: Post;
+}
 
-export function Header() {
-  const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+export function PostHeader({ post }: PostHeaderProps) {
+  const isCtf = post.category === "ctf";
 
   return (
-    <header
-      className={`sticky top-0 z-50 border-b transition-all duration-300 ${
-        scrolled
-          ? "border-border bg-background/95 backdrop-blur-lg shadow-lg shadow-black/5"
-          : "border-transparent bg-transparent"
-      }`}
-    >
-      <div className="mx-auto max-w-5xl px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="group flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-primary/50 bg-primary/10 transition-all duration-300 group-hover:border-primary group-hover:bg-primary/20 group-hover:scale-110">
-              <Terminal className="h-5 w-5 text-primary transition-transform duration-300 group-hover:rotate-12" />
-              {/* Corner accents */}
-              <div className="absolute -left-0.5 -top-0.5 h-2 w-2 border-l border-t border-primary/50 transition-all duration-300 group-hover:border-primary" />
-              <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 border-b border-r border-primary/50 transition-all duration-300 group-hover:border-primary" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">
-              <span className="text-primary transition-all duration-300 group-hover:text-shadow-glow">0x</span>
-              <span className="transition-colors duration-300 group-hover:text-primary">Blog</span>
-            </span>
-          </Link>
+    <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-card to-background py-16 md:py-24">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,150,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,150,0.01)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      <div className="absolute left-1/2 top-0 h-96 w-full -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:block">
-            <ul className="flex items-center gap-1">
-              {navLinks.map((link) => {
-                const isActive =
-                  pathname === link.href ||
-                  (link.href !== "/" && pathname.startsWith(link.href));
-                return (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className={`relative rounded-lg px-4 py-2 text-sm transition-all duration-300 ${
-                        isActive
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {/* Active indicator */}
-                      {isActive && (
-                        <span className="absolute inset-0 rounded-lg bg-primary/10 animate-fade-scale-in" />
-                      )}
-                      {/* Hover effect */}
-                      <span className="absolute inset-0 rounded-lg bg-secondary opacity-0 transition-opacity hover:opacity-100" />
-                      <span className="relative">{link.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            className="relative rounded-lg p-2 text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+      <div className="relative mx-auto max-w-3xl px-4">
+        <AnimatedWrapper animation="fade-up">
+          <Link
+            href={isCtf ? "/writeups" : "/research"}
+            className="mb-8 group inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
           >
-            <span
-              className={`block transition-all duration-300 ${
-                mobileMenuOpen ? "rotate-180 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-              }`}
-            >
-              <Menu className="h-5 w-5" />
-            </span>
-            <span
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                mobileMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-180 scale-0 opacity-0"
-              }`}
-            >
-              <X className="h-5 w-5" />
-            </span>
-          </button>
-        </div>
+            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <span>Back to {isCtf ? "writeups" : "research"}</span>
+          </Link>
+        </AnimatedWrapper>
 
-        {/* Mobile Navigation */}
-        <div
-          className={`grid transition-all duration-300 md:hidden ${
-            mobileMenuOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-          <div className="overflow-hidden">
-            <nav className="mt-4 border-t border-border pt-4">
-              <ul className="flex flex-col gap-1">
-                {navLinks.map((link, index) => {
-                  const isActive =
-                    pathname === link.href ||
-                    (link.href !== "/" && pathname.startsWith(link.href));
-                  return (
-                    <li
-                      key={link.href}
-                      className="animate-type-in"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <Link
-                        href={link.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-300 ${
-                          isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        }`}
-                      >
-                        <span className="text-primary">{">"}</span>
-                        {link.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
+        <AnimatedWrapper animation="fade-up" delay={100}>
+          <div className="mb-6 flex items-center gap-3">
+            <div className={`flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-bold uppercase tracking-wider ${isCtf ? "text-primary" : "text-cyan-400"
+              }`}>
+              {isCtf ? <Flag className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
+              {post.category}
+            </div>
+            {post.difficulty && (
+              <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                <span className={`h-2 w-2 rounded-full ${post.difficulty === "Easy" ? "bg-emerald-400" :
+                    post.difficulty === "Medium" ? "bg-amber-400" : "bg-red-400"
+                  }`} />
+                {post.difficulty}
+              </div>
+            )}
           </div>
-        </div>
+        </AnimatedWrapper>
+
+        <AnimatedWrapper animation="fade-up" delay={200}>
+          <h1 className="mb-8 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl leading-tight">
+            {post.title}
+          </h1>
+        </AnimatedWrapper>
+
+        <AnimatedWrapper animation="fade-up" delay={300}>
+          <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <span>{formatDate(post.date)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              <span>15 min read</span>
+            </div>
+            {post.platform && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground/30">|</span>
+                <span className="font-medium text-foreground">{post.platform}</span>
+              </div>
+            )}
+          </div>
+        </AnimatedWrapper>
+
+        <AnimatedWrapper animation="fade-up" delay={400}>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {post.tags.map((tag) => (
+              <Link
+                key={tag}
+                href={`/tags/${tag.toLowerCase()}`}
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+              >
+                <Tag className="h-3 w-3" />
+                {tag}
+              </Link>
+            ))}
+          </div>
+        </AnimatedWrapper>
       </div>
-    </header>
+    </section>
   );
 }
