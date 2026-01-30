@@ -3,7 +3,7 @@
 import { Calendar, Tag, Shield, Flag, ChevronLeft, Clock } from "lucide-react";
 import Link from "next/link";
 import { Post } from "@/lib/types";
-import { formatDate } from "@/lib/content";
+import { formatDate } from "@/lib/utils";
 import { AnimatedWrapper } from "./animated-wrapper";
 
 interface PostHeaderProps {
@@ -40,7 +40,7 @@ export function PostHeader({ post }: PostHeaderProps) {
             {post.difficulty && (
               <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className={`h-2 w-2 rounded-full ${post.difficulty === "Easy" ? "bg-emerald-400" :
-                    post.difficulty === "Medium" ? "bg-amber-400" : "bg-red-400"
+                  post.difficulty === "Medium" ? "bg-amber-400" : "bg-red-400"
                   }`} />
                 {post.difficulty}
               </div>

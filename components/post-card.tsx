@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Calendar, Tag, ArrowRight, Shield, Flag } from "lucide-react";
 import { Post } from "@/lib/types";
-import { formatDate } from "@/lib/content";
+import { formatDate } from "@/lib/utils";
 
 interface PostCardProps {
   post: Post;
@@ -37,7 +37,7 @@ export function PostCard({ post }: PostCardProps) {
             {post.difficulty && (
               <div className="flex items-center gap-1">
                 <span className={`h-1.5 w-1.5 rounded-full ${post.difficulty === "Easy" ? "bg-emerald-400" :
-                    post.difficulty === "Medium" ? "bg-amber-400" : "bg-red-400"
+                  post.difficulty === "Medium" ? "bg-amber-400" : "bg-red-400"
                   }`} />
                 <span>{post.difficulty}</span>
               </div>

