@@ -87,12 +87,17 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             );
 
           case "image":
+            const imgSrc = block.src || "/placeholder.svg";
+            const finalSrc = imgSrc.startsWith("/") && !imgSrc.startsWith("//")
+              ? `/blog${imgSrc}`
+              : imgSrc;
+
             return (
               <AnimatedWrapper key={index} delay={delay} animation="scale">
                 <figure className="my-8">
                   <div className="overflow-hidden rounded-lg border border-border transition-all duration-300 hover:border-primary/30">
                     <img
-                      src={block.src || "/placeholder.svg"}
+                      src={finalSrc}
                       alt={block.alt || ""}
                       className="w-full transition-transform duration-500 hover:scale-105"
                     />
