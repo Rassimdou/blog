@@ -27,11 +27,10 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b transition-all duration-300 ${
-        scrolled
+      className={`sticky top-0 z-50 border-b transition-all duration-300 ${scrolled
           ? "border-border bg-background/95 backdrop-blur-lg shadow-lg shadow-black/5"
           : "border-transparent bg-transparent"
-      }`}
+        }`}
     >
       <div className="mx-auto max-w-5xl px-4 py-4">
         <div className="flex items-center justify-between">
@@ -43,8 +42,8 @@ export function Header() {
               <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 border-b border-r border-primary/50 transition-all duration-300 group-hover:border-primary" />
             </div>
             <span className="text-lg font-semibold tracking-tight">
-              <span className="text-primary transition-all duration-300 group-hover:text-shadow-glow">0x</span>
-              <span className="transition-colors duration-300 group-hover:text-primary">Blog</span>
+              <span className="text-primary transition-all duration-300 group-hover:text-shadow-glow">B</span>
+              <span className="transition-colors duration-300 group-hover:text-primary">log</span>
             </span>
           </Link>
 
@@ -59,11 +58,10 @@ export function Header() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className={`relative rounded-lg px-4 py-2 text-sm transition-all duration-300 ${
-                        isActive
+                      className={`relative rounded-lg px-4 py-2 text-sm transition-all duration-300 ${isActive
                           ? "text-primary"
                           : "text-muted-foreground hover:text-foreground"
-                      }`}
+                        }`}
                     >
                       {/* Active indicator */}
                       {isActive && (
@@ -87,16 +85,14 @@ export function Header() {
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             <span
-              className={`block transition-all duration-300 ${
-                mobileMenuOpen ? "rotate-180 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-              }`}
+              className={`block transition-all duration-300 ${mobileMenuOpen ? "rotate-180 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                }`}
             >
               <Menu className="h-5 w-5" />
             </span>
             <span
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                mobileMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-180 scale-0 opacity-0"
-              }`}
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${mobileMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-180 scale-0 opacity-0"
+                }`}
             >
               <X className="h-5 w-5" />
             </span>
@@ -105,9 +101,8 @@ export function Header() {
 
         {/* Mobile Navigation */}
         <div
-          className={`grid transition-all duration-300 md:hidden ${
-            mobileMenuOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
+          className={`grid transition-all duration-300 md:hidden ${mobileMenuOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            }`}
         >
           <div className="overflow-hidden">
             <nav className="mt-4 border-t border-border pt-4">
@@ -125,11 +120,10 @@ export function Header() {
                       <Link
                         href={link.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-300 ${
-                          isActive
+                        className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-all duration-300 ${isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        }`}
+                          }`}
                       >
                         <span className="text-primary">{">"}</span>
                         {link.label}

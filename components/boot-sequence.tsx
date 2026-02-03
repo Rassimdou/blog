@@ -115,15 +115,14 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-700 ${
-        fadeOut ? "opacity-0" : "opacity-100"
-      }`}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-700 ${fadeOut ? "opacity-0" : "opacity-100"
+        }`}
     >
       <MatrixRain />
-      
+
       {/* Scanline effect */}
       <div className="absolute inset-0 pointer-events-none bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.1),rgba(0,0,0,0.1)_1px,transparent_1px,transparent_2px)] animate-scanlines" />
-      
+
       {/* CRT flicker */}
       <div className="absolute inset-0 pointer-events-none animate-crt-flicker" />
 
@@ -132,19 +131,23 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
         {showSkull && (
           <div className="mb-8 flex justify-center animate-fade-scale-in">
             <pre className="text-primary text-xs sm:text-sm leading-none">
-{`    _______________
-   /               \\
-  /                 \\
- |   ████     ████   |
- |   ████     ████   |
- |        ██         |
- |      ██████       |
- |   ████████████    |
-  \\                 /
-   \\_____     _____/
-         |   |
-         |   |
-        _|   |_`}
+              {`         _nnnn_
+        dGGGGMMb
+       @p~qp~~qMb
+       M|@||@) M|
+       @,----.JM|
+      JS^\\__/  qKL
+     dZP        qKRb
+    dZP          qKKb
+   fZP            SMMb
+   HZM            MMMM
+   FqM            MMMM
+ __| ".        |\\dS"qML
+ |    \`.       | \`' \\Zq
+_)      \\.___.,|     .'
+\\____   )MMMMMP|   .'
+     \`-'       \`--' 
+`}
             </pre>
           </div>
         )}
@@ -154,15 +157,14 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
           {bootLines.slice(0, visibleLines).map((line, i) => (
             <div
               key={i}
-              className={`animate-type-in ${
-                line.text.startsWith("[OK]")
+              className={`animate-type-in ${line.text.startsWith("[OK]")
                   ? "text-primary"
                   : line.text === "SYSTEM READY"
-                  ? "text-foreground font-bold"
-                  : line.text === "Welcome, operator."
-                  ? ""
-                  : "text-muted-foreground"
-              }`}
+                    ? "text-foreground font-bold"
+                    : line.text === "Welcome, operator."
+                      ? ""
+                      : "text-muted-foreground"
+                }`}
             >
               {line.text === "Welcome, operator." ? (
                 <GlitchText text={line.text} className="text-primary text-xl sm:text-2xl font-bold" />
@@ -195,6 +197,6 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
           {">"} Skip intro [SPACE]
         </button>
       </div>
-    </div>
+    </div >
   );
 }

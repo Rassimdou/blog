@@ -7,7 +7,7 @@ import "./globals.css";
 const jetbrains = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "0xBlog // CTF Writeups & Security Research",
+  title: "0xBlog // CTF Writeups & Security Topics",
   description:
     "CTF writeups, pentesting research, and security notes from the underground.",
   generator: "",

@@ -3,31 +3,21 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { AnimatedWrapper } from "@/components/animated-wrapper";
-import { Github, Twitter, Mail, ExternalLink, Award, Target, Code, Shield } from "lucide-react";
+import { Github, Mail, Award, Target, Code } from "lucide-react";
 import Link from "next/link";
 
 const skills = [
   { name: "Web Application Security", icon: Code },
-  { name: "Binary Exploitation", icon: Target },
-  { name: "Reverse Engineering", icon: Shield },
   { name: "Network Pentesting", icon: Target },
-  { name: "Cloud Security (AWS/GCP)", icon: Shield },
   { name: "Cryptography", icon: Code },
-  { name: "OSINT", icon: Target },
-  { name: "Malware Analysis", icon: Shield },
 ];
 
 const certifications = [
-  { name: "OSCP", org: "Offensive Security", year: "2023" },
-  { name: "CRTO", org: "Zero-Point Security", year: "2023" },
-  { name: "eWPT", org: "eLearnSecurity", year: "2022" },
+  { name: "CAPT", org: "Hackviser", year: "2025" },
+
 ];
 
-const platforms = [
-  { name: "HackTheBox", rank: "Pro Hacker", profile: "https://hackthebox.com", color: "emerald" },
-  { name: "TryHackMe", rank: "Top 1%", profile: "https://tryhackme.com", color: "amber" },
-  { name: "PicoCTF", rank: "5000+ pts", profile: "https://picoctf.org", color: "cyan" },
-];
+
 
 export default function AboutPage() {
   return (
@@ -78,9 +68,9 @@ export default function AboutPage() {
             <AnimatedWrapper delay={300}>
               <div className="flex flex-wrap justify-center gap-3 sm:justify-start">
                 {[
-                  { href: "https://github.com", icon: Github, label: "GitHub" },
-                  { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
-                  { href: "mailto:contact@example.com", icon: Mail, label: "Email" },
+                  { href: "https://github.com/rassimdou", icon: Github, label: "GitHub" },
+
+                  { href: "mailto:douaouriarassim@gmail.com", icon: Mail, label: "Email" },
                 ].map((social, index) => (
                   <Link
                     key={social.label}
@@ -125,39 +115,8 @@ export default function AboutPage() {
               </div>
             </AnimatedWrapper>
 
-            {/* CTF Platforms */}
-            <AnimatedWrapper delay={200}>
-              <div className="mb-16">
-                <h2 className="mb-8 text-xl font-semibold sm:text-2xl">
-                  <span className="text-primary">{">"}</span> CTF Platforms
-                </h2>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {platforms.map((platform, index) => (
-                    <AnimatedWrapper key={platform.name} delay={250 + index * 100} animation="scale">
-                      <Link
-                        href={platform.profile}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover-lift group relative overflow-hidden rounded-lg border border-border bg-card p-5 transition-all duration-300 hover:border-primary/50"
-                      >
-                        {/* Gradient overlay on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        
-                        <div className="relative">
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="font-medium text-foreground">
-                              {platform.name}
-                            </span>
-                            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                          </div>
-                          <span className="text-sm text-primary">{platform.rank}</span>
-                        </div>
-                      </Link>
-                    </AnimatedWrapper>
-                  ))}
-                </div>
-              </div>
-            </AnimatedWrapper>
+
+
 
             {/* Certifications */}
             <AnimatedWrapper delay={300}>
@@ -198,7 +157,7 @@ export default function AboutPage() {
                 {/* Corner brackets */}
                 <div className="absolute left-4 top-4 h-8 w-8 border-l-2 border-t-2 border-primary/50" />
                 <div className="absolute bottom-4 right-4 h-8 w-8 border-b-2 border-r-2 border-primary/50" />
-                
+
                 <div className="relative">
                   <h3 className="mb-3 text-xl font-semibold text-foreground">
                     Want to collaborate?
@@ -208,7 +167,7 @@ export default function AboutPage() {
                     challenges, or potential collaborations.
                   </p>
                   <Link
-                    href="mailto:contact@example.com"
+                    href="mailto:douaouriarassim@gmail.com"
                     className="group inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
                   >
                     <Mail className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />

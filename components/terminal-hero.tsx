@@ -31,7 +31,7 @@ export function TerminalHero() {
             <AnimatedWrapper animation="fade-right">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary">
                 <Shield className="h-3.5 w-3.5" />
-                <span>CYBER SECURITY RESEARCH LAB</span>
+                <span>CYBER SECURITY FIELD ARCHIVES</span>
               </div>
             </AnimatedWrapper>
 
@@ -56,7 +56,7 @@ export function TerminalHero() {
                 </button>
                 <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm font-mono text-muted-foreground">
                   <span className="text-primary">$</span>
-                  <span>ssh guest@0xblog.xyz</span>
+                  <span>ssh guest@rassimdou.github.io/blog</span>
                 </div>
               </div>
             </AnimatedWrapper>
@@ -86,17 +86,16 @@ export function TerminalHero() {
                     <span className="text-foreground/90">whoami</span>
                   </div>
                   <div className="mb-6 text-muted-foreground">
-                    security_researcher@protonmail.com
+                    Cyber Security Enthusiast
                   </div>
                   <div className="mb-4 flex items-start gap-3">
                     <span className="text-primary shrink-0">$</span>
                     <span className="text-foreground/90">ls -la ./recent_work</span>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-cyan-400/80">
-                    <div>drwxr-xr-x kernel_exploits</div>
+                    <div>drwxr-xr-x Honey Pot</div>
                     <div>drwxr-xr-x ctf_writeups</div>
-                    <div>drwxr-xr-x tool_dev</div>
-                    <div>drwxr-xr-x malware_analysis</div>
+                    <div>drwxr-xr-x File Inclusion offensive tool</div>
                   </div>
                   <div className="mt-6 flex items-start gap-3">
                     <span className="text-primary shrink-0">$</span>
