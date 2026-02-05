@@ -1,63 +1,226 @@
 {
-  "id": "research-jwt-bypass",
-  "title": "JWT Authentication Bypass Techniques",
-  "slug": "jwt-bypass-techniques",
+  "id": "jwt-security-complete-guide",
+  "title": "JWT Security: From Basics to Bulletproof Implementation",
+  "slug": "jwt-security-complete-guide",
   "category": "research",
   "tags": [
     "JWT",
     "Authentication",
     "Web Security",
-    "Cryptography"
+    "Cryptography",
+    "Node.js",
+    "Best Practices"
   ],
   "difficulty": "Medium",
-  "date": "2024-11-28",
-  "summary": "Deep dive into common JWT vulnerabilities including algorithm confusion, key injection, and signature bypass methods.",
+  "date": "2025-02-06",
+  "summary": "Comprehensive guide to JWT authentication: understanding tokens vs sessions, implementing secure JWT flows, common vulnerabilities with live demos, and production-ready security patterns.",
   "content": [
     {
       "type": "heading",
       "level": 2,
-      "text": "Introduction"
+      "text": "Introduction: Why JWT Matters"
     },
     {
       "type": "paragraph",
-      "text": "JSON Web Tokens (JWTs) are widely used for authentication. However, improper implementations can lead to severe vulnerabilities."
+      "text": "JSON Web Tokens (JWT) have become the de facto standard for stateless authentication in modern web applications. But with great power comes great responsibility—implement JWT incorrectly, and you've handed attackers the keys to your kingdom. This guide covers everything from the fundamentals to bulletproof implementation."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "Algorithm Confusion Attack"
+      "text": "Understanding Authentication: Tokens vs Sessions"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Traditional Session-Based Authentication"
     },
     {
       "type": "paragraph",
-      "text": "When servers accept both HS256 and RS256, an attacker can sign tokens with the public key using HS256."
+      "text": "In traditional session-based auth, the server stores session data in memory or a database (Redis, MongoDB) and sends a session ID cookie to the client. Every request hits the database to validate the session."
     },
     {
       "type": "code",
-      "language": "python",
-      "code": "import jwt\nimport base64\n\n# Read the public key\nwith open('public.pem', 'r') as f:\n    public_key = f.read()\n\n# Create malicious token\npayload = {'user': 'admin', 'role': 'admin'}\ntoken = jwt.encode(payload, public_key, algorithm='HS256')\n\nprint(f'Malicious token: {token}')"
+      "language": "javascript",
+      "code": "// Traditional Session Flow (Server-Side State)\n// 1. User logs in → Server creates session in DB\n// 2. Server sends: Set-Cookie: sessionId=abc123\n// 3. Client sends cookie with every request\n// 4. Server looks up sessionId in database\n// 5. Database returns user data\n\n// Pros: Easy to revoke (just delete from DB)\n// Cons: Server memory pressure, database hits on every request, harder to scale"
     },
     {
       "type": "heading",
-      "level": 2,
-      "text": "None Algorithm Attack"
+      "level": 3,
+      "text": "Token-Based Authentication (JWT)"
     },
     {
       "type": "paragraph",
-      "text": "Some libraries accept 'none' as a valid algorithm, allowing unsigned tokens."
+      "text": "JWT moves the state to the client. The server signs a token containing user claims, and the client presents this token with every request. The server only needs to verify the signature—no database lookup required for authentication."
     },
     {
       "type": "code",
-      "language": "python",
-      "code": "# Craft token with 'none' algorithm\nheader = base64.b64encode('{\"alg\":\"none\",\"typ\":\"JWT\"}'.encode()).decode().rstrip('=')\npayload = base64.b64encode('{\"user\":\"admin\"}'.encode()).decode().rstrip('=')\ntoken = f\"{header}.{payload}.\"\n\nprint(f'Unsigned token: {token}')"
+      "language": "javascript",
+      "code": "// JWT Structure: header.payload.signature\n// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4ifQ.signature\n\n// JWT Flow (Stateless)\n// 1. User logs in → Server signs JWT with secret\n// 2. Server sends: { token: \"eyJhbG...\" }\n// 3. Client sends: Authorization: Bearer eyJhbG...\n// 4. Server verifies signature locally\n// 5. Token is valid → proceed (no DB hit!)\n\n// Pros: Stateless, horizontally scalable, works across services\n// Cons: Cannot revoke instantly, token size, signature verification cost"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "When to Use Which?"
+    },
+    {
+      "type": "paragraph",
+      "text": "Use sessions when you need instant revocation (high-security admin panels) or minimal token size. Use JWT for distributed systems, microservices, mobile apps, or when you want to reduce database load. Many modern apps use a hybrid approach."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "Mitigation"
+      "text": "JWT Structure Deep Dive"
     },
     {
       "type": "paragraph",
-      "text": "Always explicitly specify allowed algorithms on the server side. Never accept 'none'. Use strong keys and rotate them regularly."
+      "text": "A JWT consists of three Base64Url-encoded parts separated by dots: Header.Payload.Signature. Understanding each component is crucial for security."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// Example JWT (decoded):\n// HEADER: { \"alg\": \"HS256\", \"typ\": \"JWT\" }\n// PAYLOAD: { \"sub\": \"1234567890\", \"name\": \"John Doe\", \"iat\": 1516239022, \"exp\": 1516242622 }\n// SIGNATURE: HMACSHA256(base64Url(header) + \".\" + base64Url(payload), secret)\n\nconst jwt = require('jsonwebtoken');\n\nconst payload = {\n  sub: 'user123',           // Subject (user ID)\n  iss: 'myapp.com',         // Issuer\n  aud: 'myapp.com',         // Audience\n  iat: Math.floor(Date.now() / 1000),  // Issued at\n  exp: Math.floor(Date.now() / 1000) + (60 * 60), // Expires in 1 hour\n  role: 'user'              // Custom claims\n};\n\nconst token = jwt.sign(payload, 'your-256-bit-secret', { algorithm: 'HS256' });\nconsole.log(token);"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Refresh Token Pattern"
+    },
+    {
+      "type": "paragraph",
+      "text": "Short-lived access tokens (15-30 min) reduce damage from theft, but users hate re-authenticating constantly. Refresh tokens solve this: long-lived tokens (days/weeks) that only go to the auth server to get new access tokens."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// Secure Token Pair Implementation\nconst crypto = require('crypto');\n\nclass TokenManager {\n  constructor() {\n    this.accessSecret = process.env.ACCESS_TOKEN_SECRET;\n    this.refreshSecret = process.env.REFRESH_TOKEN_SECRET;\n    this.refreshTokens = new Set(); // In production: use Redis with TTL\n  }\n\n  generateTokens(userId) {\n    // Access Token: Short-lived, contains claims\n    const accessToken = jwt.sign(\n      { sub: userId, type: 'access' },\n      this.accessSecret,\n      { expiresIn: '15m', algorithm: 'HS256' }\n    );\n\n    // Refresh Token: Long-lived, opaque (random string), stored server-side\n    const refreshToken = crypto.randomBytes(40).toString('hex');\n    this.refreshTokens.add(refreshToken); // Store with user ID mapping and expiration\n\n    return { accessToken, refreshToken };\n  }\n\n  refreshAccessToken(refreshToken) {\n    // Verify refresh token exists and isn't revoked\n    if (!this.refreshTokens.has(refreshToken)) {\n      throw new Error('Invalid refresh token');\n    }\n    \n    // Rotate: Delete old, issue new (prevents replay attacks)\n    this.refreshTokens.delete(refreshToken);\n    return this.generateTokens(userId); // Get userId from stored mapping\n  }\n\n  revokeRefreshToken(refreshToken) {\n    this.refreshTokens.delete(refreshToken);\n  }\n}\n\n// Usage Flow:\n// 1. Login → receive { accessToken (15m), refreshToken (7d) }\n// 2. Use accessToken for API calls\n// 3. When 401/403 → POST /refresh with refreshToken\n// 4. Server validates, rotates tokens, returns new pair\n// 5. Logout → revoke refreshToken (access token naturally expires)"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Common Vulnerabilities: The 'What If' Scenarios"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "1. Algorithm Confusion Attack (CVE-2015-9235)"
+    },
+    {
+      "type": "paragraph",
+      "text": "What if an attacker tricks your server into accepting a different algorithm? If your server supports both RS256 (asymmetric, public/private key) and HS256 (symmetric, shared secret), an attacker can use your public key as an HMAC secret."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// VULNERABLE CODE - DO NOT USE\nconst jwt = require('jsonwebtoken');\n\n// Attacker obtains public.pem (it's public, after all)\nconst publicKey = fs.readFileSync('public.pem');\n\n// Attacker creates malicious token using YOUR public key as HMAC secret\nconst maliciousToken = jwt.sign(\n  { user: 'admin', role: 'admin' },\n  publicKey,  // Using public key as symmetric secret!\n  { algorithm: 'HS256' }  // But claiming it's symmetric\n);\n\n// Server receives token with alg: 'HS256' in header\n// Server verifies: HMACSHA256(token, publicKey) \n// It matches because attacker used the same key!\n// Server accepts admin access."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// SECURE IMPLEMENTATION - Explicit Algorithm\nconst jwt = require('jsonwebtoken');\n\n// NEVER accept algorithm from token header\nconst decoded = jwt.verify(token, publicKey, {\n  algorithms: ['RS256'],  // Explicit whitelist - ONLY RS256 allowed\n  issuer: 'myapp.com',\n  audience: 'myapp.com',\n  maxAge: '15m'\n});\n\n// If attacker sends HS256 token, verification fails immediately\n// jwt.verify throws: \"algorithm not allowed\""
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "2. The 'none' Algorithm Attack"
+    },
+    {
+      "type": "paragraph",
+      "text": "What if your library accepts 'none' as a valid algorithm? Some JWT libraries (especially older ones) allowed unsigned tokens if the algorithm header was 'none'."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// Attacker crafts token with no signature:\nconst header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');\nconst payload = Buffer.from(JSON.stringify({ user: 'admin', role: 'admin' })).toString('base64url');\nconst maliciousToken = `${header}.${payload}.`;  // Empty signature!\n\n// Vulnerable server sees alg: 'none' and skips verification\n// Result: Admin access with no signature at all"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// SECURE: Explicit algorithm whitelist prevents 'none'\njwt.verify(token, secret, { algorithms: ['HS256'] }); // 'none' not in list = rejection\n\n// Additionally, use a library that explicitly disables 'none' by default\n// Node jsonwebtoken library correctly rejects 'none' since v5.0.0"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "3. Weak Secret Keys"
+    },
+    {
+      "type": "paragraph",
+      "text": "What if your secret is 'password123'? HMAC-SHA256 is only as strong as your secret. Attackers can brute-force weak secrets offline using tools like JWT_Tool or hashcat."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// SECURE: Cryptographically strong secrets\nconst crypto = require('crypto');\n\n// Generate 256-bit (32 byte) random secret\nconst strongSecret = crypto.randomBytes(32).toString('hex');\n// Result: 'a3f5c8e9d2b1...' (64 hex chars = 256 bits)\n\n// Store in environment variable, never commit to git\n// Rotate periodically using key versioning in your JWT header (kid claim)"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "4. Missing Expiration / Forever Tokens"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// VULNERABLE: Token without exp claim lives forever\nconst badToken = jwt.sign({ user: 'admin' }, secret); // No expiration!\n\n// If this token leaks in 2025, it's still valid in 2035\n// Attacker has permanent access until secret is rotated"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// SECURE: Always set expiration\nconst goodToken = jwt.sign({\n  user: 'admin',\n  iat: Math.floor(Date.now() / 1000),\n  exp: Math.floor(Date.now() / 1000) + (15 * 60) // 15 minutes\n}, secret);\n\n// Also implement token blacklist for emergency revocation\n// Use short expiration + refresh token pattern"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "5. Information Leakage in Payload"
+    },
+    {
+      "type": "paragraph",
+      "text": "What if you put sensitive data in the JWT payload? Remember: JWT is only Base64Url encoded, not encrypted. Anyone can decode the payload."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// VULNERABLE: Sensitive data exposed\nconst leakyToken = jwt.sign({\n  user: 'john',\n  ssn: '123-45-6789',  // Anyone can Base64 decode this!\n  passwordHint: 'MyDogName2023'\n}, secret);\n\n// Attacker intercepts token → Base64 decodes payload → steals SSN\n// Payload is just base64url - no key needed to read it!"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// SECURE: Minimal claims, encrypt sensitive data if needed\nconst safeToken = jwt.sign({\n  sub: 'user_uuid_123',     // Opaque identifier only\n  role: 'user',             // Authorization info (not sensitive)\n  iat: Date.now()\n}, secret);\n\n// If you MUST include sensitive data, use JWE (Encrypted JWT)\n// Or encrypt the payload separately before JWT encoding\nconst encryptedPayload = encryptSensitiveData({ email: 'john@example.com' });\nconst jweToken = jwt.sign({ data: encryptedPayload }, secret);"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Production-Ready Secure Implementation"
+    },
+    {
+      "type": "paragraph",
+      "text": "Here's a complete, secure authentication system using Express.js with all best practices implemented."
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// =====================================================\n// SECURE JWT AUTHENTICATION SYSTEM\n// =====================================================\n\nconst express = require('express');\nconst jwt = require('jsonwebtoken');\nconst crypto = require('crypto');\nconst rateLimit = require('express-rate-limit');\nconst helmet = require('helmet');\nconst cookieParser = require('cookie-parser');\n\nconst app = express();\n\n// Security middleware\napp.use(helmet()); // Security headers\napp.use(express.json({ limit: '10kb' })); // Body size limit\napp.use(cookieParser());\n\n// Environment-based secrets (NEVER hardcode)\nconst ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET; // 256-bit random\nconst REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET; // Different secret!\nconst ACCESS_EXPIRY = '15m';\nconst REFRESH_EXPIRY = '7d';\n\n// Redis would be used in production for token storage\nconst refreshTokenStore = new Map(); // token -> { userId, expires, family }\n\n// =====================================================\n// TOKEN GENERATION\n// =====================================================\nfunction generateTokenFamily(userId) {\n  const family = crypto.randomUUID(); // Track token families for rotation detection\n  \n  const accessToken = jwt.sign(\n    { \n      sub: userId,\n      type: 'access',\n      jti: crypto.randomUUID(), // Unique token ID for potential blacklisting\n      iat: Math.floor(Date.now() / 1000)\n    },\n    ACCESS_SECRET,\n    { \n      expiresIn: ACCESS_EXPIRY,\n      algorithm: 'HS256',  // Explicit algorithm\n      issuer: 'myapp.com',\n      audience: 'myapp.com'\n    }\n  );\n\n  const refreshToken = crypto.randomBytes(32).toString('base64url'); // Opaque token\n  \n  refreshTokenStore.set(refreshToken, {\n    userId,\n    family,\n    createdAt: Date.now(),\n    expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)\n  });\n\n  return { accessToken, refreshToken, family };\n}\n\n// =====================================================\n// SECURE VERIFICATION MIDDLEWARE\n// =====================================================\nconst authenticate = (req, res, next) => {\n  try {\n    const authHeader = req.headers.authorization;\n    if (!authHeader?.startsWith('Bearer ')) {\n      return res.status(401).json({ error: 'Missing or invalid authorization header' });\n    }\n\n    const token = authHeader.substring(7);\n    \n    // CRITICAL: Explicit algorithm whitelist\n    const decoded = jwt.verify(token, ACCESS_SECRET, {\n      algorithms: ['HS256'],        // Only allow HS256\n      issuer: 'myapp.com',           // Verify issuer\n      audience: 'myapp.com',         // Verify audience\n      complete: false                // Return payload only\n    });\n\n    // Additional checks\n    if (decoded.type !== 'access') {\n      return res.status(403).json({ error: 'Invalid token type' });\n    }\n\n    req.user = { id: decoded.sub, tokenId: decoded.jti };\n    next();\n    \n  } catch (error) {\n    if (error.name === 'TokenExpiredError') {\n      return res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });\n    }\n    if (error.name === 'JsonWebTokenError') {\n      return res.status(403).json({ error: 'Invalid token' });\n    }\n    return res.status(403).json({ error: 'Token verification failed' });\n  }\n};\n\n// =====================================================\n// AUTHENTICATION ROUTES\n// =====================================================\n\n// Rate limiting for login\nconst loginLimiter = rateLimit({\n  windowMs: 15 * 60 * 1000, // 15 minutes\n  max: 5, // 5 attempts per window\n  message: 'Too many login attempts'\n});\n\napp.post('/login', loginLimiter, async (req, res) => {\n  // Validate credentials (bcrypt comparison, etc.)\n  const { username, password } = req.body;\n  const user = await validateCredentials(username, password);\n  \n  if (!user) {\n    return res.status(401).json({ error: 'Invalid credentials' });\n  }\n\n  const tokens = generateTokenFamily(user.id);\n  \n  // Set refresh token as HTTP-only cookie (secure against XSS)\n  res.cookie('refreshToken', tokens.refreshToken, {\n    httpOnly: true,\n    secure: true,        // HTTPS only in production\n    sameSite: 'strict',  // CSRF protection\n    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days\n  });\n\n  // Return access token in response body (for Authorization header)\n  res.json({ \n    accessToken: tokens.accessToken,\n    expiresIn: 900 // 15 minutes in seconds\n  });\n});\n\n// Token refresh with rotation detection\napp.post('/refresh', (req, res) => {\n  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;\n  \n  if (!refreshToken || !refreshTokenStore.has(refreshToken)) {\n    return res.status(403).json({ error: 'Invalid refresh token' });\n  }\n\n  const tokenData = refreshTokenStore.get(refreshToken);\n  \n  // Check expiration\n  if (Date.now() > tokenData.expiresAt) {\n    refreshTokenStore.delete(refreshToken);\n    return res.status(403).json({ error: 'Refresh token expired' });\n  }\n\n  // Token Rotation: Issue new family, invalidate old\n  refreshTokenStore.delete(refreshToken);\n  const newTokens = generateTokenFamily(tokenData.userId);\n\n  res.cookie('refreshToken', newTokens.refreshToken, {\n    httpOnly: true,\n    secure: true,\n    sameSite: 'strict',\n    maxAge: 7 * 24 * 60 * 60 * 1000\n  });\n\n  res.json({ accessToken: newTokens.accessToken });\n});\n\n// Logout with token revocation\napp.post('/logout', authenticate, (req, res) => {\n  const refreshToken = req.cookies.refreshToken;\n  if (refreshToken) {\n    refreshTokenStore.delete(refreshToken);\n  }\n  \n  // In production: Add access token JTI to blacklist until expiration\n  // redis.setex(`blacklist:${req.user.tokenId}`, 900, 'revoked');\n  \n  res.clearCookie('refreshToken');\n  res.json({ message: 'Logged out successfully' });\n});\n\n// Protected route example\napp.get('/api/user/profile', authenticate, (req, res) => {\n  // req.user.id is available and verified\n  res.json({ userId: req.user.id, message: 'Secure data' });\n});\n\n// Error handling\napp.use((err, req, res, next) => {\n  console.error('Auth error:', err);\n  res.status(500).json({ error: 'Internal server error' });\n});\n\napp.listen(3000, () => console.log('Secure auth server running'));"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Security Checklist"
+    },
+    {
+      "type": "paragraph",
+      "text": "Before deploying JWT authentication to production, verify every item on this checklist:"
+    },
+    {
+      "type": "code",
+      "language": "markdown",
+      "code": "□ Algorithm Explicitly Set: Always specify allowed algorithms, never accept from token\n□ Strong Secrets: Use 256-bit (32 byte) cryptographically random secrets\n□ Short Expiration: Access tokens expire in 15-30 minutes maximum\n□ Refresh Token Rotation: Issue new refresh token on every use, detect reuse\n□ HTTP-Only Cookies: Store refresh tokens in httpOnly, secure, sameSite=strict cookies\n□ Input Validation: Rate limit login endpoints, validate all input data\n□ Minimal Payloads: Never put sensitive data (PII, passwords) in JWT payload\n□ Issuer/Audience: Verify iss and aud claims match your application\n□ Secure Libraries: Use maintained libraries (jsonwebtoken v9+, PyJWT 2.4+, etc.)\n□ Key Rotation: Implement key versioning (kid header) for emergency rotation\n□ Logging: Log authentication failures, token refresh patterns, anomalies\n□ HTTPS Only: Never transmit tokens over HTTP in production\n□ CSRF Protection: For cookie-based tokens, implement CSRF protection\n□ Token Binding: Consider binding tokens to TLS session or device fingerprinting"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Conclusion"
+    },
+    {
+      "type": "paragraph",
+      "text": "JWT authentication is powerful but requires disciplined implementation. The most common vulnerabilities—algorithm confusion, weak secrets, and missing expiration—are all preventable with explicit configuration and secure defaults. Remember: stateless authentication doesn't mean zero server-side state—maintain a revocation list for emergency scenarios and use the refresh token pattern for secure session management. When in doubt, prefer explicit security over convenience."
     }
   ]
 }
