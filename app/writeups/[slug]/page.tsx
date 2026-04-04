@@ -3,7 +3,6 @@ import { Footer } from "@/components/footer";
 import { PostHeader } from "@/components/post-header";
 import { ContentRenderer } from "@/components/content-renderer";
 import { getPostBySlug, getPostsByCategory } from "@/lib/content";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -11,6 +10,8 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
+
+export const dynamic = "force-static";
 
 export async function generateMetadata({
   params,
@@ -30,6 +31,9 @@ export async function generateMetadata({
 
 export function generateStaticParams() {
   const posts = getPostsByCategory("ctf");
+  if (posts.length === 0) {
+    return [{ slug: "coming-soon" }];
+  }
   return posts.map((post) => ({ slug: post.slug }));
 }
 
@@ -38,7 +42,20 @@ export default async function WriteupPage({ params }: PageProps) {
   const post = getPostBySlug(slug);
 
   if (!post || post.category !== "ctf") {
-    notFound();
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1">
+          <section className="mx-auto max-w-3xl px-4 py-20 text-center">
+            <h1 className="mb-3 text-3xl font-bold">Writeup coming soon</h1>
+            <p className="text-muted-foreground">
+              New CTF articles will appear here once posts are published.
+            </p>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   // Get adjacent posts for navigation

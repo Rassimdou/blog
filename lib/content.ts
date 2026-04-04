@@ -6,6 +6,10 @@ import type { Post } from "./types";
 const postsDirectory = path.join(process.cwd(), "content/posts");
 
 export function getAllPosts(): Post[] {
+  if (!fs.existsSync(postsDirectory)) {
+    return [];
+  }
+
   const fileNames = fs.readdirSync(postsDirectory);
   const allPostsData = fileNames
     .filter((fileName) => fileName.endsWith(".json"))
