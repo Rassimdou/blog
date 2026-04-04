@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { TerminalHero } from "@/components/terminal-hero";
 import { PostCard } from "@/components/post-card";
-import { BootSequence } from "@/components/boot-sequence";
 import { AnimatedWrapper } from "@/components/animated-wrapper";
 import Link from "next/link";
 import { ArrowRight, Terminal, Shield, Flag, Zap } from "lucide-react";
@@ -16,34 +14,9 @@ interface HomePageClientProps {
 }
 
 export function HomePageClient({ initialPosts }: HomePageClientProps) {
-    const [showIntro, setShowIntro] = useState(true);
-    const [mainVisible, setMainVisible] = useState(false);
-
     const posts = initialPosts.slice(0, 4);
     const ctfPosts = posts.filter((p) => p.category === "ctf");
     const researchPosts = posts.filter((p) => p.category === "research");
-
-    useEffect(() => {
-        const introShown = sessionStorage.getItem("introShown");
-        if (introShown) {
-            setShowIntro(false);
-            setMainVisible(true);
-        }
-
-        const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.code === "Space" && showIntro) {
-                handleIntroComplete();
-            }
-        };
-        window.addEventListener("keydown", handleKeyPress);
-        return () => window.removeEventListener("keydown", handleKeyPress);
-    }, [showIntro]);
-
-    const handleIntroComplete = () => {
-        setShowIntro(false);
-        sessionStorage.setItem("introShown", "true");
-        setTimeout(() => setMainVisible(true), 100);
-    };
 
     const stats = [
         {
@@ -64,13 +37,7 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
     ];
 
     return (
-        <>
-            {showIntro && <BootSequence onComplete={handleIntroComplete} />}
-
-            <div
-                className={`flex min-h-screen flex-col transition-opacity duration-700 ${mainVisible ? "opacity-100" : "opacity-0"
-                    }`}
-            >
+            <div className="flex min-h-screen flex-col">
                 <Header />
 
                 <main className="flex-1">
@@ -84,7 +51,7 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
                                 <div className="mb-16">
                                     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                         <h2 className="text-xl font-semibold sm:text-2xl">
-                                            <span className="text-primary">{">"}</span> Recent CTF Writeups
+                                            Recent CTF Writeups
                                         </h2>
                                         <Link
                                             href="/writeups"
@@ -101,9 +68,9 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
                                                 <PostCard post={post} />
                                             </AnimatedWrapper>
                                         ))}
-                                        {ctfPosts.length === 0 && (
-                                            <p className="text-muted-foreground">No CTF writeups yet...</p>
-                                        )}
+                                         {ctfPosts.length === 0 && (
+                                             <p className="text-muted-foreground">No writeups yet.</p>
+                                         )}
                                     </div>
                                 </div>
                             </AnimatedWrapper>
@@ -113,7 +80,7 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
                                 <div>
                                     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                         <h2 className="text-xl font-semibold sm:text-2xl">
-                                            <span className="text-primary">{">"}</span> Security Research
+                                            Security Research
                                         </h2>
                                         <Link
                                             href="/research"
@@ -130,9 +97,9 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
                                                 <PostCard post={post} />
                                             </AnimatedWrapper>
                                         ))}
-                                        {researchPosts.length === 0 && (
-                                            <p className="text-muted-foreground">No research posts yet...</p>
-                                        )}
+                                         {researchPosts.length === 0 && (
+                                             <p className="text-muted-foreground">No research posts yet.</p>
+                                         )}
                                     </div>
                                 </div>
                             </AnimatedWrapper>
@@ -145,7 +112,7 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
                             <AnimatedWrapper delay={100}>
                                 <div className="mb-12 text-center">
                                     <h2 className="mb-4 text-xl font-semibold sm:text-2xl">
-                                        <span className="text-primary">{">"}</span> System Statistics
+                                        System Statistics
                                     </h2>
                                     <p className="text-muted-foreground">
                                         Tracking progress through the security landscape
@@ -157,14 +124,6 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
                                 {stats.map((stat, index) => (
                                     <AnimatedWrapper key={stat.label} delay={200 + index * 150} animation="scale">
                                         <div className="hover-lift group relative overflow-hidden rounded-lg border border-border bg-card p-6 text-center">
-                                            {/* Animated border glow */}
-                                            <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                                                <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-                                                <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-                                                <div className="absolute inset-y-0 -left-px w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
-                                                <div className="absolute inset-y-0 -right-px w-px bg-gradient-to-b from-transparent via-primary to-transparent" />
-                                            </div>
-
                                             <div className="relative">
                                                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:border-primary/50">
                                                     <stat.icon className="h-6 w-6 text-primary" />
@@ -186,10 +145,6 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
                         <section className="py-16 md:py-24">
                             <div className="mx-auto max-w-5xl px-4 text-center">
                                 <div className="relative mx-auto max-w-2xl overflow-hidden rounded-lg border border-border bg-card p-8 sm:p-12">
-                                    {/* Corner accents */}
-                                    <div className="absolute left-0 top-0 h-16 w-16 border-l-2 border-t-2 border-primary/50" />
-                                    <div className="absolute bottom-0 right-0 h-16 w-16 border-b-2 border-r-2 border-primary/50" />
-
                                     <div className="relative">
                                         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
                                             <Terminal className="h-8 w-8 text-primary" />
@@ -225,6 +180,5 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
 
                 <Footer />
             </div>
-        </>
     );
 }

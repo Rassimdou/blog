@@ -72,7 +72,7 @@ function GlitchText({ text, className }: { text: string; className?: string }) {
     <span className={`relative inline-block ${className}`}>
       <span className="relative z-10">{text}</span>
       <span
-        className="absolute top-0 left-0 -z-10 text-cyan-400 animate-glitch-1"
+        className="absolute top-0 left-0 -z-10 text-yellow-300 animate-glitch-1"
         aria-hidden="true"
       >
         {text}

@@ -19,11 +19,11 @@ export async function generateMetadata({
   const post = getPostBySlug(slug);
 
   if (!post) {
-    return { title: "Not Found | 0xBlog" };
+    return { title: "Not Found | rzyux" };
   }
 
   return {
-    title: `${post.title} | 0xBlog`,
+    title: `${post.title} | rzyux`,
     description: post.summary,
   };
 }

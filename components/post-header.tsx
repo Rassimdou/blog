@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Tag, Shield, Flag, ChevronLeft, Clock } from "lucide-react";
+import { Calendar, Shield, Flag, ChevronLeft, Clock } from "lucide-react";
 import Link from "next/link";
 import { Post } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -16,7 +16,7 @@ export function PostHeader({ post }: PostHeaderProps) {
   return (
     <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-card to-background py-16 md:py-24">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,150,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,150,0.01)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(250,204,21,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(250,204,21,0.015)_1px,transparent_1px)] bg-[size:40px_40px]" />
       <div className="absolute left-1/2 top-0 h-96 w-full -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
 
       <div className="relative mx-auto max-w-3xl px-4">
@@ -26,13 +26,13 @@ export function PostHeader({ post }: PostHeaderProps) {
             className="mb-8 group inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
           >
             <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            <span>Back to {isCtf ? "writeups" : "research"}</span>
+            <span>Back to {isCtf ? "Writeups" : "Research"}</span>
           </Link>
         </AnimatedWrapper>
 
         <AnimatedWrapper animation="fade-up" delay={100}>
           <div className="mb-6 flex items-center gap-3">
-            <div className={`flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-bold uppercase tracking-wider ${isCtf ? "text-primary" : "text-cyan-400"
+            <div className={`flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-bold uppercase tracking-wider ${isCtf ? "text-primary" : "text-yellow-300"
               }`}>
               {isCtf ? <Flag className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
               {post.category}
@@ -76,14 +76,12 @@ export function PostHeader({ post }: PostHeaderProps) {
         <AnimatedWrapper animation="fade-up" delay={400}>
           <div className="mt-8 flex flex-wrap gap-2">
             {post.tags.map((tag) => (
-              <Link
+              <span
                 key={tag}
-                href={`/tags/${tag.toLowerCase()}`}
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
+                className="rounded-lg border border-border bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground"
               >
-                <Tag className="h-3 w-3" />
                 {tag}
-              </Link>
+              </span>
             ))}
           </div>
         </AnimatedWrapper>

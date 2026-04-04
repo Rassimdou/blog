@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Terminal, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandMark } from "@/components/brand-mark";
 
 const navLinks = [
-  { href: "/", label: "~/home" },
-  { href: "/writeups", label: "~/writeups" },
-  { href: "/research", label: "~/research" },
-  { href: "/about", label: "~/about" },
+  { href: "/", label: "Home" },
+  { href: "/writeups", label: "Writeups" },
+  { href: "/research", label: "Research" },
+  { href: "/about", label: "About" },
 ];
 
 export function Header() {
@@ -35,21 +37,16 @@ export function Header() {
       <div className="mx-auto max-w-5xl px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="group flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-primary/50 bg-primary/10 transition-all duration-300 group-hover:border-primary group-hover:bg-primary/20 group-hover:scale-110">
-              <Terminal className="h-5 w-5 text-primary transition-transform duration-300 group-hover:rotate-12" />
-              {/* Corner accents */}
-              <div className="absolute -left-0.5 -top-0.5 h-2 w-2 border-l border-t border-primary/50 transition-all duration-300 group-hover:border-primary" />
-              <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 border-b border-r border-primary/50 transition-all duration-300 group-hover:border-primary" />
+            <div className="transition-transform duration-300 group-hover:scale-110">
+              <BrandMark />
             </div>
-            <span className="text-lg font-semibold tracking-tight">
-              <span className="text-primary transition-all duration-300 group-hover:text-shadow-glow">B</span>
-              <span className="transition-colors duration-300 group-hover:text-primary">log</span>
-            </span>
+            <span className="text-lg font-semibold tracking-tight transition-colors duration-300 group-hover:text-primary">rzyux</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:block">
-            <ul className="flex items-center gap-1">
+          <div className="hidden md:flex md:items-center md:gap-3">
+            <nav>
+              <ul className="flex items-center gap-1">
               {navLinks.map((link) => {
                 const isActive =
                   pathname === link.href ||
@@ -63,40 +60,39 @@ export function Header() {
                           : "text-muted-foreground hover:text-foreground"
                         }`}
                     >
-                      {/* Active indicator */}
-                      {isActive && (
-                        <span className="absolute inset-0 rounded-lg bg-primary/10 animate-fade-scale-in" />
-                      )}
-                      {/* Hover effect */}
-                      <span className="absolute inset-0 rounded-lg bg-secondary opacity-0 transition-opacity hover:opacity-100" />
                       <span className="relative">{link.label}</span>
                     </Link>
                   </li>
                 );
               })}
-            </ul>
-          </nav>
+              </ul>
+            </nav>
+            <ThemeToggle />
+          </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            className="relative rounded-lg p-2 text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            <span
-              className={`block transition-all duration-300 ${mobileMenuOpen ? "rotate-180 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-                }`}
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              className="relative rounded-lg p-2 text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
-              <Menu className="h-5 w-5" />
-            </span>
-            <span
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${mobileMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-180 scale-0 opacity-0"
-                }`}
-            >
-              <X className="h-5 w-5" />
-            </span>
-          </button>
+              <span
+                className={`block transition-all duration-300 ${mobileMenuOpen ? "rotate-180 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+                  }`}
+              >
+                <Menu className="h-5 w-5" />
+              </span>
+              <span
+                className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${mobileMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-180 scale-0 opacity-0"
+                  }`}
+              >
+                <X className="h-5 w-5" />
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -125,7 +121,6 @@ export function Header() {
                             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                           }`}
                       >
-                        <span className="text-primary">{">"}</span>
                         {link.label}
                       </Link>
                     </li>

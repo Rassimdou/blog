@@ -58,7 +58,7 @@ export default function NotFound() {
 
       <main className="relative flex flex-1 items-center justify-center overflow-hidden">
         {/* Background effects */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,150,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,150,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(250,204,21,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(250,204,21,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
         <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/5 blur-3xl" />
         
         {/* Scanlines */}
@@ -81,20 +81,19 @@ export default function NotFound() {
 
           <AnimatedWrapper delay={200}>
             <h2 className="mb-4 text-xl font-semibold sm:text-2xl">
-              <span className="text-primary">//</span> <GlitchText text="ACCESS DENIED" />
+              <GlitchText text="Page Not Found" />
             </h2>
           </AnimatedWrapper>
 
           <AnimatedWrapper delay={300}>
             <p className="mb-8 max-w-md text-muted-foreground">
-              The page you&apos;re looking for doesn&apos;t exist or has been
-              moved to a secure location.
+              The page you&apos;re looking for doesn&apos;t exist.
             </p>
           </AnimatedWrapper>
 
           {/* Animated terminal */}
           <AnimatedWrapper delay={400}>
-            <div className="mx-auto mb-8 max-w-md overflow-hidden rounded-lg border border-border bg-[#0a0a0f] shadow-2xl">
+            <div className="mx-auto mb-8 max-w-md overflow-hidden rounded-lg border border-border bg-card shadow-2xl">
               <div className="flex items-center gap-2 border-b border-border bg-secondary/30 px-4 py-2">
                 <div className="flex gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-full bg-red-500/80" />

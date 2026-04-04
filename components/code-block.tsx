@@ -20,7 +20,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const isTerminal = language === "bash" || language === "shell" || language === "terminal";
 
   return (
-    <div className="hover-lift group relative my-6 overflow-hidden rounded-lg border border-border bg-[#0a0a0f] shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-primary/5">
+    <div className="hover-lift group relative my-6 overflow-hidden rounded-lg border border-border bg-card shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-primary/5">
       {/* Animated top border */}
       <div className="absolute inset-x-0 top-0 h-px overflow-hidden">
         <div className="h-full w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent translate-x-[-100%] transition-transform duration-700 group-hover:translate-x-[100%]" />

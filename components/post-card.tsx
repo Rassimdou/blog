@@ -19,9 +19,9 @@ export function PostCard({ post }: PostCardProps) {
         {isCtf ? (
           <Flag className="h-3 w-3 text-primary" />
         ) : (
-          <Shield className="h-3 w-3 text-cyan-400" />
+          <Shield className="h-3 w-3 text-yellow-300" />
         )}
-        <span className={isCtf ? "text-primary" : "text-cyan-400"}>
+        <span className={isCtf ? "text-primary" : "text-yellow-300"}>
           {post.category}
         </span>
       </div>

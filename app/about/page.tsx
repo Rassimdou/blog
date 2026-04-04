@@ -28,7 +28,7 @@ export default function AboutPage() {
         {/* Hero */}
         <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-card to-background py-16 md:py-24">
           {/* Background decoration */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,150,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,150,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(250,204,21,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(250,204,21,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
           <div className="absolute left-0 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
 
           <div className="relative mx-auto max-w-3xl px-4">
@@ -38,9 +38,6 @@ export default function AboutPage() {
                   <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/10 text-3xl font-bold text-primary transition-all duration-500 hover:border-primary hover:scale-105">
                     0x
                   </div>
-                  {/* Corner decorations */}
-                  <div className="absolute -left-2 -top-2 h-4 w-4 border-l-2 border-t-2 border-primary/50" />
-                  <div className="absolute -bottom-2 -right-2 h-4 w-4 border-b-2 border-r-2 border-primary/50" />
                   {/* Animated ping */}
                   <div className="absolute -right-1 -top-1 h-3 w-3">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
@@ -51,9 +48,7 @@ export default function AboutPage() {
             </AnimatedWrapper>
 
             <AnimatedWrapper delay={100}>
-              <h1 className="mb-4 text-center text-3xl font-bold tracking-tight sm:text-left sm:text-4xl md:text-5xl">
-                <span className="text-primary">$</span> cat ~/about.txt
-              </h1>
+              <h1 className="mb-4 text-center text-3xl font-bold tracking-tight sm:text-left sm:text-4xl md:text-5xl">About Me</h1>
             </AnimatedWrapper>
 
             <AnimatedWrapper delay={200}>
@@ -96,7 +91,7 @@ export default function AboutPage() {
             <AnimatedWrapper delay={100}>
               <div className="mb-16">
                 <h2 className="mb-8 text-xl font-semibold sm:text-2xl">
-                  <span className="text-primary">{">"}</span> Skills & Focus Areas
+                  Skills & Focus Areas
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {skills.map((skill, index) => (
@@ -122,7 +117,7 @@ export default function AboutPage() {
             <AnimatedWrapper delay={300}>
               <div className="mb-16">
                 <h2 className="mb-8 text-xl font-semibold sm:text-2xl">
-                  <span className="text-primary">{">"}</span> Certifications
+                  Certifications
                 </h2>
                 <div className="space-y-3">
                   {certifications.map((cert, index) => (
@@ -154,10 +149,6 @@ export default function AboutPage() {
             {/* Contact CTA */}
             <AnimatedWrapper delay={400}>
               <div className="relative overflow-hidden rounded-lg border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 text-center">
-                {/* Corner brackets */}
-                <div className="absolute left-4 top-4 h-8 w-8 border-l-2 border-t-2 border-primary/50" />
-                <div className="absolute bottom-4 right-4 h-8 w-8 border-b-2 border-r-2 border-primary/50" />
-
                 <div className="relative">
                   <h3 className="mb-3 text-xl font-semibold text-foreground">
                     Want to collaborate?

@@ -1,13 +1,15 @@
 import React from "react"
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const jetbrains = JetBrains_Mono({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
 
 export const metadata: Metadata = {
-  title: "0xBlog // CTF Writeups & Security Topics",
+  title: "rzyux // CTF Writeups & Security Topics",
   description:
     "CTF writeups, pentesting research, and security notes from the underground.",
   generator: "",
@@ -36,11 +38,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${jetbrains.className} font-mono antialiased bg-background text-foreground`}
+        className={`${geist.variable} ${jetbrains.variable} font-sans antialiased bg-background text-foreground`}
       >
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          {children}
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

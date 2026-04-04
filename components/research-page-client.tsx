@@ -30,21 +30,19 @@ export function ResearchPageClient({ initialPosts }: ResearchPageClientProps) {
             <main className="flex-1">
                 {/* Hero */}
                 <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-card to-background py-16 md:py-20">
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,150,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,150,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(250,204,21,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(250,204,21,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
                     <div className="absolute left-1/4 top-0 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
 
                     <div className="relative mx-auto max-w-5xl px-4">
                         <AnimatedWrapper>
                             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs text-primary">
                                 <Shield className="h-3.5 w-3.5" />
-                                <span className="uppercase tracking-wider">Security Research</span>
+                                <span>Security Research</span>
                             </div>
                         </AnimatedWrapper>
 
                         <AnimatedWrapper delay={100}>
-                            <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-                                <span className="text-primary">$</span> cat ~/research/*
-                            </h1>
+                            <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Research</h1>
                         </AnimatedWrapper>
 
                         <AnimatedWrapper delay={200}>
