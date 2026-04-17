@@ -14,13 +14,15 @@ export function ContentRenderer({ content }: ContentRendererProps) {
     <div className="max-w-none">
       {content.map((block, index) => {
         const delay = Math.min(index * 50, 500);
+        const generateId = (text?: string) => text?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';
 
         switch (block.type) {
-          case "heading":
+          case "heading": {
+            const id = generateId(block.text);
             if (block.level === 2) {
               return (
                 <AnimatedWrapper key={index} delay={delay}>
-                  <h2 className="display-type group mb-4 mt-14 flex items-center gap-3 text-2xl leading-tight text-foreground first:mt-0 sm:text-3xl">
+                  <h2 id={id} className="display-type group mb-4 mt-14 flex items-center gap-3 text-2xl leading-tight text-foreground first:mt-0 sm:text-3xl scroll-mt-24">
                     <span className="h-px w-10 bg-border transition-all duration-300 group-hover:w-14 group-hover:bg-primary" />
                     {block.text}
                   </h2>
@@ -30,7 +32,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             if (block.level === 3) {
               return (
                 <AnimatedWrapper key={index} delay={delay}>
-                  <h3 className="display-type mb-3 mt-10 text-xl text-foreground">
+                  <h3 id={id} className="display-type mb-3 mt-10 text-xl text-foreground scroll-mt-24">
                     {block.text}
                   </h3>
                 </AnimatedWrapper>
@@ -38,11 +40,12 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             }
             return (
               <AnimatedWrapper key={index} delay={delay}>
-                <h4 className="mb-2 mt-8 text-lg text-foreground">
+                <h4 id={id} className="mb-2 mt-8 text-lg text-foreground scroll-mt-24">
                   {block.text}
                 </h4>
               </AnimatedWrapper>
             );
+          }
 
           case "paragraph":
             return (

@@ -2,6 +2,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PostHeader } from "@/components/post-header";
 import { ContentRenderer } from "@/components/content-renderer";
+import { TableOfContents } from "@/components/table-of-contents";
 import { getPostBySlug, getPostsByCategory } from "@/lib/content";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -44,8 +45,11 @@ export default async function ResearchArticlePage({ params }: PageProps) {
   if (!post || post.category !== "research") {
     return (
       <div className="flex min-h-screen flex-col">
+        <div className="mx-auto w-full max-w-4xl px-6 pt-8 md:px-10 md:pt-12">
         <Header />
-        <main className="flex-1">
+      </div>
+
+      <main className="flex-1 w-full">
           <section className="mx-auto max-w-3xl px-4 py-20 text-center">
             <h1 className="mb-3 text-3xl font-bold">Research post coming soon</h1>
             <p className="text-muted-foreground">
@@ -53,10 +57,12 @@ export default async function ResearchArticlePage({ params }: PageProps) {
             </p>
           </section>
         </main>
+        <div className="mx-auto w-full max-w-4xl px-6 pb-12 md:px-10 md:pb-16">
         <Footer />
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // Get adjacent posts for navigation
   const allPosts = getPostsByCategory("research").sort(
@@ -68,13 +74,17 @@ export default async function ResearchArticlePage({ params }: PageProps) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <div className="mx-auto w-full max-w-4xl px-6 pt-8 md:px-10 md:pt-12">
+        <Header />
+      </div>
 
-      <main className="flex-1">
+      <main className="flex-1 w-full">
         <PostHeader post={post} />
 
         <article className="py-12 md:py-16">
-          <div className="mx-auto max-w-3xl px-4">
+          <div className="mx-auto max-w-[1400px] px-4 lg:grid lg:grid-cols-[1fr_minmax(auto,48rem)_1fr] lg:gap-8">
+            <div className="hidden lg:block" />
+            <div className="min-w-0 max-w-3xl mx-auto w-full">
             <ContentRenderer content={post.content} />
 
             {/* Post navigation */}
@@ -111,11 +121,20 @@ export default async function ResearchArticlePage({ params }: PageProps) {
                 </Link>
               )}
             </div>
+            </div>
+
+            <aside className="hidden w-[250px] shrink-0 lg:block">
+              <div className="sticky top-24">
+                <TableOfContents content={post.content} />
+              </div>
+            </aside>
           </div>
         </article>
       </main>
 
-      <Footer />
+      <div className="mx-auto w-full max-w-4xl px-6 pb-12 md:px-10 md:pb-16">
+        <Footer />
+      </div>
     </div>
   );
 }
