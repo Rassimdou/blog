@@ -82,9 +82,9 @@ export default async function ResearchArticlePage({ params }: PageProps) {
               {prevPost ? (
                 <Link
                   href={`/research/${prevPost.slug}`}
-                  className="group flex flex-col rounded-lg border border-border bg-card p-4 transition-all duration-300 hover:border-primary/50 hover:bg-card/80"
+                  className="group glass-panel flex flex-col p-4 transition-all duration-300 hover:border-primary/50 hover:bg-card/80"
                 >
-                  <span className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     <ArrowLeft className="h-3 w-3 transition-transform duration-300 group-hover:-translate-x-1" />
                     Previous
                   </span>
@@ -99,9 +99,9 @@ export default async function ResearchArticlePage({ params }: PageProps) {
               {nextPost && (
                 <Link
                   href={`/research/${nextPost.slug}`}
-                  className="group flex flex-col items-end rounded-lg border border-border bg-card p-4 text-right transition-all duration-300 hover:border-primary/50 hover:bg-card/80"
+                  className="group glass-panel flex flex-col items-end p-4 text-right transition-all duration-300 hover:border-primary/50 hover:bg-card/80"
                 >
-                  <span className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Next
                     <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>

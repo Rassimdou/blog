@@ -3,171 +3,120 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { AnimatedWrapper } from "@/components/animated-wrapper";
-import { Github, Mail, Award, Target, Code } from "lucide-react";
+import { Github, Mail, Code, Bookmark } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const skills = [
-  { name: "Web Application Security", icon: Code },
-  { name: "Network Pentesting", icon: Target },
-  { name: "Cryptography", icon: Code },
+  { name: "Web Application Security" },
+  { name: "Network Pentesting" },
+  { name: "Cryptography" },
 ];
 
 const certifications = [
   { name: "CAPT", org: "Hackviser", year: "2025" },
-
 ];
-
-
 
 export default function AboutPage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="page-shell">
       <Header />
 
-      <main className="flex-1">
-        {/* Hero */}
-        <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-card to-background py-16 md:py-24">
-          {/* Background decoration */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(250,204,21,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(250,204,21,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
-          <div className="absolute left-0 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
-
-          <div className="relative mx-auto max-w-3xl px-4">
-            <AnimatedWrapper>
-              <div className="mb-8 flex justify-center sm:justify-start">
-                <div className="relative">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/10 text-3xl font-bold text-primary transition-all duration-500 hover:border-primary hover:scale-105">
-                    0x
-                  </div>
-                  {/* Animated ping */}
-                  <div className="absolute -right-1 -top-1 h-3 w-3">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                    <span className="relative inline-flex h-3 w-3 rounded-full bg-primary" />
-                  </div>
-                </div>
-              </div>
-            </AnimatedWrapper>
-
-            <AnimatedWrapper delay={100}>
-              <h1 className="mb-4 text-center text-3xl font-bold tracking-tight sm:text-left sm:text-4xl md:text-5xl">About Me</h1>
-            </AnimatedWrapper>
-
-            <AnimatedWrapper delay={200}>
-              <p className="mb-8 text-center text-lg leading-relaxed text-muted-foreground sm:text-left">
-                Security researcher and CTF enthusiast. I break things to
-                understand how they work, then document everything so others can
-                learn too.
-              </p>
-            </AnimatedWrapper>
-
-            {/* Social links */}
-            <AnimatedWrapper delay={300}>
-              <div className="flex flex-wrap justify-center gap-3 sm:justify-start">
-                {[
+      <main className="flex-1 space-y-8">
+        <section className="editorial-surface relative overflow-hidden px-6 py-16 text-center md:px-10 md:py-24">
+            <AnimatedWrapper delay={200} className="relative z-10">
+                <span className="eyebrow mb-6 block">0x</span>
+                <h1 className="display-type mb-6 text-4xl tracking-[-0.05em] text-foreground sm:text-6xl md:text-7xl">
+                  About Me
+                </h1>
+                <p className="mx-auto mb-12 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
+                   Security researcher and CTF enthusiast. I break systems to understand them, then write down the useful parts clearly enough for someone else to follow.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4">
+                 {[
                   { href: "https://github.com/rassimdou", icon: Github, label: "GitHub" },
-
                   { href: "mailto:douaouriarassim@gmail.com", icon: Mail, label: "Email" },
-                ].map((social, index) => (
+                 ].map((social, index) => (
                   <Link
                     key={social.label}
                     href={social.href}
                     target={social.href.startsWith("mailto") ? undefined : "_blank"}
                     rel={social.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
-                    className="hover-lift group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-muted-foreground transition-all duration-300 hover:border-primary/50 hover:text-primary"
+                    className="glass-panel flex w-full max-w-[11rem] flex-col items-center gap-3 p-4 text-muted-foreground transition-colors hover:text-primary"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <social.icon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-                    {social.label}
+                    <social.icon className="h-6 w-6" />
+                    <span className="text-base">{social.label}</span>
                   </Link>
-                ))}
-              </div>
+                 ))}
+                 </div>
             </AnimatedWrapper>
-          </div>
         </section>
 
-        {/* Content */}
-        <section className="py-12 md:py-16">
-          <div className="mx-auto max-w-3xl px-4">
-            {/* Skills */}
-            <AnimatedWrapper delay={100}>
-              <div className="mb-16">
-                <h2 className="mb-8 text-xl font-semibold sm:text-2xl">
-                  Skills & Focus Areas
-                </h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {skills.map((skill, index) => (
-                    <AnimatedWrapper key={skill.name} delay={150 + index * 50} animation="fade-left">
-                      <div className="hover-lift group flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-all duration-300 hover:border-primary/50">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary transition-colors duration-300 group-hover:bg-primary/10">
-                          <skill.icon className="h-5 w-5 text-muted-foreground transition-colors duration-300 group-hover:text-primary" />
-                        </div>
-                        <span className="text-sm text-muted-foreground transition-colors duration-300 group-hover:text-foreground">
-                          {skill.name}
-                        </span>
-                      </div>
-                    </AnimatedWrapper>
-                  ))}
-                </div>
-              </div>
-            </AnimatedWrapper>
-
-
-
-
-            {/* Certifications */}
-            <AnimatedWrapper delay={300}>
-              <div className="mb-16">
-                <h2 className="mb-8 text-xl font-semibold sm:text-2xl">
-                  Certifications
-                </h2>
-                <div className="space-y-3">
-                  {certifications.map((cert, index) => (
-                    <AnimatedWrapper key={cert.name} delay={350 + index * 100} animation="fade-right">
-                      <div className="hover-lift group flex items-center justify-between rounded-lg border border-border bg-card p-5 transition-all duration-300 hover:border-primary/50">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 transition-all duration-300 group-hover:scale-110">
-                            <Award className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-foreground">
-                              {cert.name}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {cert.org}
-                            </div>
-                          </div>
-                        </div>
-                        <span className="rounded-full border border-border bg-secondary px-3 py-1 text-sm text-muted-foreground">
-                          {cert.year}
-                        </span>
-                      </div>
-                    </AnimatedWrapper>
-                  ))}
-                </div>
-              </div>
-            </AnimatedWrapper>
-
-            {/* Contact CTA */}
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <AnimatedWrapper delay={400}>
-              <div className="relative overflow-hidden rounded-lg border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 text-center">
-                <div className="relative">
-                  <h3 className="mb-3 text-xl font-semibold text-foreground">
-                    Want to collaborate?
-                  </h3>
-                  <p className="mb-6 text-muted-foreground">
-                    I'm always interested in discussing security research, CTF
-                    challenges, or potential collaborations.
-                  </p>
+              <div className="editorial-surface h-full p-8">
+                <div className="mb-8 flex items-center gap-3 border-b border-border/70 pb-4">
+                     <Code className="h-5 w-5 text-primary" />
+                    <h2 className="display-type text-lg text-foreground">
+                      Skills & Focus Areas
+                    </h2>
+                </div>
+                <div className="flex flex-col gap-4">
+                  {skills.map((skill) => (
+                      <div key={skill.name} className="glass-panel flex items-center justify-between gap-4 p-4">
+                        <span className="text-base text-muted-foreground">{skill.name}</span>
+                        <div className="flex gap-1">
+                             {[1,2,3,4,5].map(i => <div key={i} className={`h-4 w-2 rounded-sm ${i <= 4 ? "bg-primary" : "bg-primary/20"}`} /> )}
+                        </div>
+                      </div>
+                  ))}
+                </div>
+              </div>
+            </AnimatedWrapper>
+
+            <AnimatedWrapper delay={600}>
+              <div className="editorial-surface h-full p-8">
+                <div className="mb-8 flex items-center gap-3 border-b border-border/70 pb-4">
+                    <Bookmark className="h-5 w-5 text-primary" />
+                    <h2 className="display-type text-lg text-foreground">
+                      Certifications
+                    </h2>
+                </div>
+                <div className="flex flex-col gap-4">
+                  {certifications.map((cert) => (
+                      <div key={cert.name} className="glass-panel flex flex-col p-4">
+                          <h3 className="display-type mb-1 text-xl tracking-tight text-foreground">{cert.name}</h3>
+                          <div className="flex items-center justify-between gap-4 text-base text-muted-foreground">
+                              <span>{cert.org}</span>
+                              <span className="rounded-sm border border-primary/20 bg-primary/10 px-3 py-1 text-primary">{cert.year}</span>
+                          </div>
+                      </div>
+                  ))}
+                </div>
+              </div>
+            </AnimatedWrapper>
+
+            <AnimatedWrapper delay={800} className="md:col-span-2">
+              <div className="editorial-surface flex flex-col items-center p-8 text-center sm:p-12">
+                   <div className="relative mb-6 p-4">
+                        <Image src="/blog/led_ring.png" alt="LED" width={200} height={200} className="h-24 w-24 rounded-sm object-cover opacity-80" />
+                        <div className="absolute inset-0 bg-primary/20 animate-ping" />
+                   </div>
+                   <h2 className="display-type mb-4 text-3xl tracking-tight text-foreground">
+                     Want to collaborate?
+                    </h2>
+                    <p className="mb-8 max-w-lg text-base leading-8 text-muted-foreground">
+                        I'm always interested in discussing security research, CTF challenges, or potential collaborations.
+                    </p>
                   <Link
                     href="mailto:douaouriarassim@gmail.com"
-                    className="group inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
+                    className="glass-button bg-primary px-8 py-4 text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:text-primary-foreground"
                   >
-                    <Mail className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-                    Get in touch
+                     Get in touch 
                   </Link>
-                </div>
               </div>
             </AnimatedWrapper>
-          </div>
         </section>
       </main>
 

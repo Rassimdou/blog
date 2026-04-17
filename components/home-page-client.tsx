@@ -2,183 +2,124 @@
 
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { TerminalHero } from "@/components/terminal-hero";
-import { PostCard } from "@/components/post-card";
-import { AnimatedWrapper } from "@/components/animated-wrapper";
 import Link from "next/link";
-import { ArrowRight, Terminal, Shield, Flag, Zap } from "lucide-react";
 import type { Post } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 
 interface HomePageClientProps {
-    initialPosts: Post[];
+  initialPosts: Post[];
 }
 
 export function HomePageClient({ initialPosts }: HomePageClientProps) {
-    const posts = initialPosts.slice(0, 4);
-    const ctfPosts = posts.filter((p) => p.category === "ctf");
-    const researchPosts = posts.filter((p) => p.category === "research");
+  const posts = initialPosts.slice(0, 5);
+  const latestPost = posts[0];
+  const allTags = Array.from(new Set(initialPosts.flatMap((post) => post.tags))).slice(0, 6);
 
-    const stats = [
-        {
-            icon: Flag,
-            value: `${initialPosts.filter((p) => p.category === "ctf").length}+`,
-            label: "CTF Writeups",
-        },
-        {
-            icon: Shield,
-            value: `${initialPosts.filter((p) => p.category === "research").length}+`,
-            label: "Research Papers",
-        },
-        {
-            icon: Zap,
-            value: `${new Set(initialPosts.flatMap((p) => p.tags)).size}+`,
-            label: "Topics Covered",
-        },
-    ];
+  return (
+    <div className="page-shell">
+      <Header />
 
-    return (
-            <div className="flex min-h-screen flex-col">
-                <Header />
+      <main className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.85fr)] lg:gap-8">
+        <section className="editorial-surface p-7 md:p-10">
+          <p className="eyebrow mb-4">Latest writing</p>
+          <h2 className="display-type max-w-2xl text-4xl leading-tight tracking-[-0.04em] text-foreground sm:text-5xl md:text-[3.45rem]">
+            Thoughts on security, challenge solving, and the details worth documenting.
+          </h2>
+          <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground">
+            This blog is where I collect CTF writeups, research notes, and practical lessons from breaking down systems carefully enough to explain them.
+          </p>
 
-                <main className="flex-1">
-                    <TerminalHero />
-
-                    {/* Recent Posts */}
-                    <section className="py-16 md:py-24">
-                        <div className="mx-auto max-w-5xl px-4">
-                            {/* CTF Writeups Section */}
-                            <AnimatedWrapper delay={200}>
-                                <div className="mb-16">
-                                    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <h2 className="text-xl font-semibold sm:text-2xl">
-                                            Recent CTF Writeups
-                                        </h2>
-                                        <Link
-                                            href="/writeups"
-                                            className="group flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
-                                        >
-                                            <span>View all writeups</span>
-                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                        </Link>
-                                    </div>
-
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                        {ctfPosts.map((post, index) => (
-                                            <AnimatedWrapper key={post.id} delay={300 + index * 100} animation="fade-up">
-                                                <PostCard post={post} />
-                                            </AnimatedWrapper>
-                                        ))}
-                                         {ctfPosts.length === 0 && (
-                                             <p className="text-muted-foreground">No writeups yet.</p>
-                                         )}
-                                    </div>
-                                </div>
-                            </AnimatedWrapper>
-
-                            {/* Research Section */}
-                            <AnimatedWrapper delay={400}>
-                                <div>
-                                    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <h2 className="text-xl font-semibold sm:text-2xl">
-                                            Security Research
-                                        </h2>
-                                        <Link
-                                            href="/research"
-                                            className="group flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
-                                        >
-                                            <span>View all research</span>
-                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                        </Link>
-                                    </div>
-
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                        {researchPosts.map((post, index) => (
-                                            <AnimatedWrapper key={post.id} delay={500 + index * 100} animation="fade-up">
-                                                <PostCard post={post} />
-                                            </AnimatedWrapper>
-                                        ))}
-                                         {researchPosts.length === 0 && (
-                                             <p className="text-muted-foreground">No research posts yet.</p>
-                                         )}
-                                    </div>
-                                </div>
-                            </AnimatedWrapper>
-                        </div>
-                    </section>
-
-                    {/* Stats Section */}
-                    <section className="border-t border-border bg-card/30 py-16 md:py-20">
-                        <div className="mx-auto max-w-5xl px-4">
-                            <AnimatedWrapper delay={100}>
-                                <div className="mb-12 text-center">
-                                    <h2 className="mb-4 text-xl font-semibold sm:text-2xl">
-                                        System Statistics
-                                    </h2>
-                                    <p className="text-muted-foreground">
-                                        Tracking progress through the security landscape
-                                    </p>
-                                </div>
-                            </AnimatedWrapper>
-
-                            <div className="grid gap-6 sm:grid-cols-3">
-                                {stats.map((stat, index) => (
-                                    <AnimatedWrapper key={stat.label} delay={200 + index * 150} animation="scale">
-                                        <div className="hover-lift group relative overflow-hidden rounded-lg border border-border bg-card p-6 text-center">
-                                            <div className="relative">
-                                                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:border-primary/50">
-                                                    <stat.icon className="h-6 w-6 text-primary" />
-                                                </div>
-                                                <div className="mb-2 text-3xl font-bold text-primary sm:text-4xl">
-                                                    {stat.value}
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">{stat.label}</div>
-                                            </div>
-                                        </div>
-                                    </AnimatedWrapper>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* CTA Section */}
-                    <AnimatedWrapper delay={300}>
-                        <section className="py-16 md:py-24">
-                            <div className="mx-auto max-w-5xl px-4 text-center">
-                                <div className="relative mx-auto max-w-2xl overflow-hidden rounded-lg border border-border bg-card p-8 sm:p-12">
-                                    <div className="relative">
-                                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-                                            <Terminal className="h-8 w-8 text-primary" />
-                                        </div>
-                                        <h2 className="mb-4 text-2xl font-bold sm:text-3xl">
-                                            Ready to dive deeper?
-                                        </h2>
-                                        <p className="mb-8 text-muted-foreground">
-                                            Explore the full archive of CTF writeups and security research.
-                                        </p>
-                                        <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                                            <Link
-                                                href="/writeups"
-                                                className="group inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/25"
-                                            >
-                                                <Flag className="h-4 w-4" />
-                                                <span>Browse Writeups</span>
-                                                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                            </Link>
-                                            <Link
-                                                href="/about"
-                                                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-6 py-3 text-sm font-medium text-secondary-foreground transition-all hover:border-primary/50 hover:bg-secondary/80"
-                                            >
-                                                <span>About Me</span>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </AnimatedWrapper>
-                </main>
-
-                <Footer />
+          {latestPost && (
+            <div className="glass-panel mt-8 p-5 sm:p-6">
+              <p className="eyebrow">
+                Read next
+              </p>
+              <h3 className="display-type mt-3 text-2xl leading-tight text-foreground">
+                <Link
+                  href={`/${latestPost.category === "ctf" ? "writeups" : "research"}/${latestPost.slug}`}
+                  className="hover:text-primary"
+                >
+                  {latestPost.title}
+                </Link>
+              </h3>
+              <p className="mt-3 text-[0.98rem] leading-7 text-muted-foreground">
+                {latestPost.summary}
+              </p>
+              <p className="mt-4 text-base text-muted-foreground">
+                {formatDate(latestPost.date)}
+              </p>
             </div>
-    );
+          )}
+        </section>
+
+        <aside className="flex flex-col gap-6">
+          <section className="editorial-surface p-6">
+            <p className="eyebrow mb-3">Sections</p>
+            <div className="space-y-3 text-[0.98rem] leading-7">
+              <Link href="/writeups" className="block hover:text-primary">
+                Blog
+              </Link>
+              <Link href="/research" className="block hover:text-primary">
+                Work
+              </Link>
+              <Link href="/about" className="block hover:text-primary">
+                About
+              </Link>
+            </div>
+          </section>
+
+          <section className="editorial-surface p-6">
+            <p className="eyebrow mb-3">Topics</p>
+            <div className="flex flex-wrap gap-2">
+              {allTags.map((tag) => (
+                <span key={tag} className="glass-chip">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </section>
+        </aside>
+
+        <section className="editorial-surface p-7 md:p-10 lg:col-span-2">
+          <div className="mb-6 flex flex-col gap-4 border-b border-border/70 pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="eyebrow mb-2">Archive</p>
+              <h2 className="display-type text-2xl text-foreground">Recent posts</h2>
+            </div>
+            <Link
+              href="/writeups"
+              className="glass-button self-start sm:self-auto"
+            >
+              View all
+            </Link>
+          </div>
+
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
+            {posts.map((post) => (
+              <li key={post.id}>
+                <Link
+                  href={`/${post.category === "ctf" ? "writeups" : "research"}/${post.slug}`}
+                  className="group grid gap-2 rounded-sm border border-transparent px-3 py-4 transition-all duration-300 hover:border-border/70 hover:bg-accent/45 md:grid-cols-[130px_1fr]"
+                >
+                  <span className="text-base text-muted-foreground">
+                    {formatDate(post.date)}
+                  </span>
+                  <div>
+                    <h3 className="display-type text-xl text-foreground group-hover:text-primary">
+                      {post.title}
+                    </h3>
+                    <p className="mt-1 max-w-3xl text-[0.98rem] leading-7 text-muted-foreground">
+                      {post.summary}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  );
 }

@@ -3,7 +3,7 @@
 import { CodeBlock } from "./code-block";
 import { AnimatedWrapper } from "./animated-wrapper";
 import type { ContentBlock } from "@/lib/types";
-import { Flag, AlertTriangle, Info, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Flag, Info } from "lucide-react";
 
 interface ContentRendererProps {
   content: ContentBlock[];
@@ -11,7 +11,7 @@ interface ContentRendererProps {
 
 export function ContentRenderer({ content }: ContentRendererProps) {
   return (
-    <div className="prose-invert max-w-none">
+    <div className="max-w-none">
       {content.map((block, index) => {
         const delay = Math.min(index * 50, 500);
 
@@ -20,10 +20,8 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             if (block.level === 2) {
               return (
                 <AnimatedWrapper key={index} delay={delay}>
-                  <h2 className="group mb-4 mt-10 flex items-center gap-3 text-xl font-semibold text-foreground first:mt-0 sm:text-2xl">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary/20">
-                      #
-                    </span>
+                  <h2 className="display-type group mb-4 mt-14 flex items-center gap-3 text-2xl leading-tight text-foreground first:mt-0 sm:text-3xl">
+                    <span className="h-px w-10 bg-border transition-all duration-300 group-hover:w-14 group-hover:bg-primary" />
                     {block.text}
                   </h2>
                 </AnimatedWrapper>
@@ -32,15 +30,15 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             if (block.level === 3) {
               return (
                 <AnimatedWrapper key={index} delay={delay}>
-                  <h3 className="mb-3 mt-8 text-lg font-medium text-foreground">
-                    <span className="text-primary">##</span> {block.text}
+                  <h3 className="display-type mb-3 mt-10 text-xl text-foreground">
+                    {block.text}
                   </h3>
                 </AnimatedWrapper>
               );
             }
             return (
               <AnimatedWrapper key={index} delay={delay}>
-                <h4 className="mb-2 mt-6 text-base font-medium text-foreground">
+                <h4 className="mb-2 mt-8 text-lg text-foreground">
                   {block.text}
                 </h4>
               </AnimatedWrapper>
@@ -49,7 +47,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
           case "paragraph":
             return (
               <AnimatedWrapper key={index} delay={delay}>
-                <p className="my-4 leading-7 text-muted-foreground">
+                <p className="my-5 whitespace-pre-wrap text-[1.03rem] leading-8 text-muted-foreground">
                   {block.text}
                 </p>
               </AnimatedWrapper>
@@ -58,26 +56,23 @@ export function ContentRenderer({ content }: ContentRendererProps) {
           case "code":
             return (
               <AnimatedWrapper key={index} delay={delay}>
-                <CodeBlock
-                  code={block.code || ""}
-                  language={block.language}
-                />
+                <CodeBlock code={block.code || ""} language={block.language} />
               </AnimatedWrapper>
             );
 
           case "flag":
             return (
               <AnimatedWrapper key={index} delay={delay} animation="scale">
-                <div className="hover-lift group my-8 overflow-hidden rounded-lg border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 transition-all duration-300 hover:border-primary/50">
+                <div className="group my-8 overflow-hidden rounded-sm border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 transition-all duration-300 hover:border-primary/35">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/20 transition-transform duration-300 group-hover:scale-110">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-primary/15 transition-transform duration-300 group-hover:scale-110">
                       <Flag className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <div className="mb-1 text-xs font-medium uppercase tracking-wider text-primary">
+                      <div className="mb-1 text-base text-primary">
                         Flag Captured
                       </div>
-                      <code className="rounded bg-background/50 px-2 py-1 text-sm text-foreground">
+                      <code className="rounded bg-background/70 px-2 py-1 text-sm text-foreground">
                         {block.text}
                       </code>
                     </div>
@@ -86,16 +81,15 @@ export function ContentRenderer({ content }: ContentRendererProps) {
               </AnimatedWrapper>
             );
 
-          case "image":
+          case "image": {
             const imgSrc = block.src || "/placeholder.svg";
-            const finalSrc = imgSrc.startsWith("/") && !imgSrc.startsWith("//")
-              ? `/blog${imgSrc}`
-              : imgSrc;
+            const finalSrc =
+              imgSrc.startsWith("/") && !imgSrc.startsWith("//") ? `/blog${imgSrc}` : imgSrc;
 
             return (
               <AnimatedWrapper key={index} delay={delay} animation="scale">
                 <figure className="my-8">
-                  <div className="overflow-hidden rounded-lg border border-border transition-all duration-300 hover:border-primary/30">
+                  <div className="overflow-hidden rounded-sm border border-border transition-all duration-300 hover:border-primary/30">
                     <img
                       src={finalSrc}
                       alt={block.alt || ""}
@@ -103,16 +97,17 @@ export function ContentRenderer({ content }: ContentRendererProps) {
                     />
                   </div>
                   {block.alt && (
-                    <figcaption className="mt-3 text-center text-sm text-muted-foreground">
-                      <span className="text-primary">//</span> {block.alt}
+                    <figcaption className="mt-3 text-center text-base text-muted-foreground">
+                      {block.alt}
                     </figcaption>
                   )}
                 </figure>
               </AnimatedWrapper>
             );
+          }
 
-          case "note":
-            const noteStyles = {
+          case "note": {
+            const noteStyles: Record<string, { border: string, bg: string, icon: React.ElementType, iconColor: string }> = {
               info: {
                 border: "border-blue-400/30",
                 bg: "bg-blue-400/5",
@@ -131,19 +126,26 @@ export function ContentRenderer({ content }: ContentRendererProps) {
                 icon: CheckCircle,
                 iconColor: "text-emerald-400",
               },
+              danger: {
+                border: "border-red-400/30",
+                bg: "bg-red-400/5",
+                icon: AlertTriangle,
+                iconColor: "text-red-400",
+              },
             };
-            const noteType = (block as ContentBlock & { noteType?: "info" | "warning" | "success" }).noteType || "info";
+            const noteType = (block as ContentBlock & { noteType?: string }).noteType || "info";
             const style = noteStyles[noteType];
             const NoteIcon = style.icon;
 
             return (
               <AnimatedWrapper key={index} delay={delay}>
-                <div className={`my-6 flex gap-4 rounded-lg border ${style.border} ${style.bg} p-4`}>
+                <div className={`my-6 flex gap-4 rounded-sm border ${style.border} ${style.bg} p-4`}>
                   <NoteIcon className={`h-5 w-5 shrink-0 ${style.iconColor}`} />
-                  <p className="text-sm text-muted-foreground">{block.text}</p>
+                  <p className="text-sm leading-7 text-muted-foreground">{block.text}</p>
                 </div>
               </AnimatedWrapper>
             );
+          }
 
           default:
             return null;

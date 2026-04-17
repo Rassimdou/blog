@@ -72,7 +72,7 @@ function GlitchText({ text, className }: { text: string; className?: string }) {
     <span className={`relative inline-block ${className}`}>
       <span className="relative z-10">{text}</span>
       <span
-        className="absolute top-0 left-0 -z-10 text-yellow-300 animate-glitch-1"
+        className="absolute top-0 left-0 -z-10 text-cyan-400 animate-glitch-1"
         aria-hidden="true"
       >
         {text}
@@ -115,7 +115,7 @@ export function BootSequence({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-700 ${fadeOut ? "opacity-0" : "opacity-100"
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#060d1e] transition-opacity duration-700 ${fadeOut ? "opacity-0" : "opacity-100"
         }`}
     >
       <MatrixRain />

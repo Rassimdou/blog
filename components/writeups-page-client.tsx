@@ -1,148 +1,70 @@
 "use client";
 
+import { useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PostCard } from "@/components/post-card";
-import { AnimatedWrapper } from "@/components/animated-wrapper";
-import { Flag, Filter } from "lucide-react";
-import { useState } from "react";
 import type { Post } from "@/lib/types";
 
 interface WriteupsPageClientProps {
-    initialPosts: Post[];
+  initialPosts: Post[];
 }
 
 export function WriteupsPageClient({ initialPosts }: WriteupsPageClientProps) {
-    const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-    const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [filter, setFilter] = useState("all");
 
-    const platforms = Array.from(new Set(initialPosts.map((p) => p.platform))).filter(Boolean);
-    const difficulties = ["Easy", "Medium", "Hard"];
+  const filteredPosts = initialPosts.filter((post) => {
+    if (filter === "all") return true;
+    return post.difficulty?.toLowerCase() === filter;
+  });
 
-    const posts = initialPosts.filter((post) => {
-        if (selectedPlatform && post.platform !== selectedPlatform) return false;
-        if (selectedDifficulty && post.difficulty !== selectedDifficulty) return false;
-        return true;
-    });
+  return (
+    <div className="page-shell">
+      <Header />
 
-    return (
-        <div className="flex min-h-screen flex-col">
-            <Header />
+      <main className="flex flex-col gap-8">
+        <section className="editorial-surface p-7 md:p-10">
+          <p className="eyebrow mb-3">Archive</p>
+          <h2 className="display-type text-3xl leading-tight tracking-[-0.03em] text-foreground">
+            CTF Writeups
+          </h2>
+          <p className="mt-3 max-w-2xl text-base leading-8 text-muted-foreground">
+            Walkthroughs, notes, and takeaways from challenges that were worth writing down cleanly.
+          </p>
 
-            <main className="flex-1">
-                {/* Hero */}
-                <section className="relative overflow-hidden border-b border-border bg-gradient-to-b from-card to-background py-16 md:py-20">
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(250,204,21,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(250,204,21,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
-                    <div className="absolute right-0 top-0 h-96 w-96 -translate-y-1/2 translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+          <div className="mb-8 mt-8 flex flex-wrap items-center gap-3 text-sm">
+            <span className="text-base text-muted-foreground">
+              Difficulty
+            </span>
+            {["all", "easy", "medium", "hard"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`rounded-sm border px-4 py-2 text-base backdrop-blur-xl transition-all duration-300 ${
+                  filter === f
+                    ? "border-primary/30 bg-foreground text-background"
+                    : "border-border/70 bg-secondary/55 text-muted-foreground hover:border-primary/35 hover:text-foreground"
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
 
-                    <div className="relative mx-auto max-w-5xl px-4">
-                        <AnimatedWrapper>
-                            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs text-primary">
-                                <Flag className="h-3.5 w-3.5" />
-                                <span>CTF Writeups</span>
-                            </div>
-                        </AnimatedWrapper>
+          <div className="flex flex-col gap-1">
+            {filteredPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+            {filteredPosts.length === 0 && (
+              <p className="py-4 text-sm italic text-muted-foreground">
+                No writeups found.
+              </p>
+            )}
+          </div>
+        </section>
+      </main>
 
-                        <AnimatedWrapper delay={100}>
-                            <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Writeups</h1>
-                        </AnimatedWrapper>
-
-                        <AnimatedWrapper delay={200}>
-                            <p className="mb-8 max-w-2xl text-muted-foreground">
-                                Detailed walkthroughs of CTF challenges. Learn the methodology,
-                                tools, and techniques used to solve each challenge.
-                            </p>
-                        </AnimatedWrapper>
-
-                        {/* Filters */}
-                        <AnimatedWrapper delay={300}>
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Filter className="h-4 w-4" />
-                                    <span>Filter by:</span>
-                                </div>
-
-                                <div className="flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedPlatform(null)}
-                                        className={`rounded-lg border px-3 py-1.5 text-sm transition-all duration-300 ${!selectedPlatform
-                                                ? "border-primary/50 bg-primary/10 text-primary"
-                                                : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-                                            }`}
-                                    >
-                                        All ({initialPosts.length})
-                                    </button>
-                                    {platforms.map((platform) => (
-                                        <button
-                                            type="button"
-                                            key={platform}
-                                            onClick={() => setSelectedPlatform(selectedPlatform === platform ? null : platform ?? null)}
-                                            className={`rounded-lg border px-3 py-1.5 text-sm transition-all duration-300 ${selectedPlatform === platform
-                                                    ? "border-primary/50 bg-primary/10 text-primary"
-                                                    : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-                                                }`}
-                                        >
-                                            {platform}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="flex flex-wrap gap-2">
-                                    {difficulties.map((diff) => (
-                                        <button
-                                            type="button"
-                                            key={diff}
-                                            onClick={() => setSelectedDifficulty(selectedDifficulty === diff ? null : diff)}
-                                            className={`rounded-lg border px-3 py-1.5 text-sm transition-all duration-300 ${selectedDifficulty === diff
-                                                    ? diff === "Easy"
-                                                        ? "border-emerald-400/50 bg-emerald-400/10 text-emerald-400"
-                                                        : diff === "Medium"
-                                                            ? "border-amber-400/50 bg-amber-400/10 text-amber-400"
-                                                            : "border-red-400/50 bg-red-400/10 text-red-400"
-                                                    : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-                                                }`}
-                                        >
-                                            {diff}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </AnimatedWrapper>
-                    </div>
-                </section>
-
-                {/* Posts Grid */}
-                <section className="py-12 md:py-16">
-                    <div className="mx-auto max-w-5xl px-4">
-                        {posts.length > 0 ? (
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                {posts.map((post, index) => (
-                                    <AnimatedWrapper key={post.id} delay={index * 100} animation="fade-up">
-                                        <PostCard post={post} />
-                                    </AnimatedWrapper>
-                                ))}
-                            </div>
-                        ) : (
-                            <AnimatedWrapper>
-                                <div className="rounded-lg border border-border bg-card p-12 text-center">
-                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary">
-                                        <Flag className="h-8 w-8 text-muted-foreground" />
-                                    </div>
-                                    <h3 className="mb-2 text-lg font-medium">No writeups found</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                        {selectedPlatform || selectedDifficulty
-                                            ? "Try adjusting your filters."
-                                            : "Check back soon for new content!"}
-                                    </p>
-                                </div>
-                            </AnimatedWrapper>
-                        )}
-                    </div>
-                </section>
-            </main>
-
-            <Footer />
-        </div>
-    );
+      <Footer />
+    </div>
+  );
 }

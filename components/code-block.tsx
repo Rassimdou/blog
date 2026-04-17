@@ -20,14 +20,14 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
   const isTerminal = language === "bash" || language === "shell" || language === "terminal";
 
   return (
-    <div className="hover-lift group relative my-6 overflow-hidden rounded-lg border border-border bg-card shadow-lg transition-all duration-300 hover:border-primary/30 hover:shadow-primary/5">
+    <div className="hover-lift group relative my-6 overflow-hidden rounded-sm border border-border/70 bg-card/70 shadow-lg backdrop-blur-2xl transition-all duration-300 hover:border-primary/30 hover:shadow-primary/5">
       {/* Animated top border */}
       <div className="absolute inset-x-0 top-0 h-px overflow-hidden">
         <div className="h-full w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent translate-x-[-100%] transition-transform duration-700 group-hover:translate-x-[100%]" />
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border bg-secondary/30 px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-border/70 bg-secondary/35 px-4 py-2.5 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
             <div className="h-3 w-3 rounded-full bg-red-500/80 transition-colors hover:bg-red-500" />
@@ -35,7 +35,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
             <div className="h-3 w-3 rounded-full bg-emerald-500/80 transition-colors hover:bg-emerald-500" />
           </div>
           {language && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
               {isTerminal && <Terminal className="h-3.5 w-3.5" />}
               <span>{language}</span>
             </div>
@@ -44,7 +44,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
         <button
           type="button"
           onClick={copyToClipboard}
-          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs transition-all duration-300 ${
+          className={`flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs transition-all duration-300 ${
             copied
               ? "bg-primary/20 text-primary"
               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -68,7 +68,7 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
 
       {/* Code content */}
       <div className="overflow-x-auto p-4">
-        <pre className="text-sm leading-relaxed">
+        <pre className="font-mono text-sm leading-relaxed">
           <code className="text-foreground/90">
             {code.split("\n").map((line, i) => (
               <div key={i} className="group/line flex">

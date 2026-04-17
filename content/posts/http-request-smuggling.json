@@ -1,0 +1,492 @@
+{
+  "id": "http-request-smuggling-workshop",
+  "title": "HTTP Request Smuggling Workshop",
+  "slug": "http-request-smuggling",
+  "category": "research",
+  "tags": ["web", "http", "smuggling"],
+  "difficulty": "Medium",
+  "date": "2026-04-17",
+  "summary": "A deep dive into HTTP Request Smuggling, understanding CL.TE, TE.CL, and TE.TE vulnerabilities, detection techniques, exploitation scenarios, and mitigations.",
+  "content": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. HTTP/1.1 & Persistent Connections"
+    },
+    {
+      "type": "paragraph",
+      "text": "By default in HTTP/1.0, every request opened a new TCP connection and closed it immediately after the response. This was wasteful. HTTP/1.1 introduced persistent connections (keep-alive) where the same TCP socket is reused for multiple req/res cycles."
+    },
+    {
+      "type": "note",
+      "noteType": "info",
+      "text": "Key idea: Multiple requests can share a single TCP connection; they are queued and processed sequentially over the same socket. The server must know exactly where one request ends and the next begins."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "How it works"
+    },
+    {
+      "type": "paragraph",
+      "text": "• Client opens a TCP connection to the server.\n• Client sends Request #1, server responds.\n• Same connection stays open (no TCP teardown).\n• Client sends Request #2 over the same socket.\n• Connection closes after timeout or explicit Connection: close header."
+    },
+
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. Role of Reverse Proxies & Load Balancers"
+    },
+    {
+      "type": "paragraph",
+      "text": "In modern web architectures, traffic rarely hits the application server directly. It passes through one or more intermediaries first, each with its own HTTP parsing logic."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Common intermediaries"
+    },
+    {
+      "type": "paragraph",
+      "text": "• Reverse Proxy (Nginx, HAProxy): Terminates TLS, routes traffic, rewrites headers.\n• CDN / WAF (Cloudflare, Akamai): Caches content, filters malicious traffic, global PoPs.\n• Load Balancer (AWS ALB, F5): Distributes traffic across backend pool, health checks."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "The two-hop request lifecycle"
+    },
+    {
+      "type": "paragraph",
+      "text": "• Client (browser) sends HTTP request to the Frontend (proxy/CDN).\n• Frontend parses, optionally modifies, then forwards to Backend over a persistent connection.\n• Backend processes and responds. Frontend relays response to client.\n• The frontend-to-backend connection is shared (keep-alive) for performance."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Why This Matters"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sometimes the frontend and backend servers disagree on how to read the same request. This mismatch is what allows an attacker to sneak in a second hidden request, leading to HTTP Request Smuggling."
+    },
+
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. What is HTTP Request Smuggling?"
+    },
+    {
+      "type": "note",
+      "noteType": "info",
+      "text": "The word \"smuggling\" (تهريب in Arabic) fits perfectly: you're hiding contraband inside a legitimate shipment. Instead of a physical item, you're hiding an extra HTTP request inside a normal one."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Core Idea"
+    },
+    {
+      "type": "paragraph",
+      "text": "You send one request, but two servers (frontend + backend) interpret it differently, causing the backend to process a second \"smuggled\" request that you fully control."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Root Cause"
+    },
+    {
+      "type": "paragraph",
+      "text": "Proxies and backends sometimes disagree on:\n• How to handle Content-Length (CL) vs Transfer-Encoding (TE) when both are present.\n• Where exactly a request body ends.\n• How to parse edge cases: whitespace in headers, duplicate headers, obfuscated values.\nThis desynchronization is the root cause of all HRS variants."
+    },
+
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. The Two Key Headers"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Content-Length (CL)"
+    },
+    {
+      "type": "paragraph",
+      "text": "A header that tells the server exactly how many bytes to read for the request body."
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "Content-Length: 13"
+    },
+    {
+      "type": "paragraph",
+      "text": "• Server reads headers.\n• Sees Content-Length: 13.\n• Reads exactly 13 bytes.\n• Considers the request complete.\n• Anything after that → treated as the next request."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Transfer-Encoding: chunked (TE)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Instead of a fixed size upfront, the body is sent in variable-size chunks. Each chunk is prefixed by its size in hexadecimal. A zero-size chunk signals the end of the body."
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: example.com\nTransfer-Encoding: chunked\n\n5\nHELLO\n6\n WORLD\n0\n\n"
+    },
+    {
+      "type": "paragraph",
+      "text": "• 5 → read 5 bytes (HELLO)\n• 6 → read 6 bytes ( WORLD)\n• 0 → end of body"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "When Both Headers Are Present"
+    },
+    {
+      "type": "paragraph",
+      "text": "RFC 7230 states that Transfer-Encoding takes priority and Content-Length must be ignored when both are present. However, not all servers implement this correctly — and that disagreement is exactly what attackers exploit."
+    },
+    {
+      "type": "note",
+      "noteType": "warning",
+      "text": "A server that processes CL when TE is also present, or vice versa, is vulnerable. The attacker crafts a single request that each side parses differently."
+    },
+
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. Vulnerability Types"
+    },
+    {
+      "type": "paragraph",
+      "text": "There are three main HRS variants depending on which header each side prioritizes:\n\n• CL.TE — Frontend uses Content-Length, Backend uses Transfer-Encoding\n• TE.CL — Frontend uses Transfer-Encoding, Backend uses Content-Length\n• TE.TE — Both use Transfer-Encoding, but one can be confused via obfuscation"
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "5.1 CL.TE — Frontend: Content-Length / Backend: Transfer-Encoding"
+    },
+    {
+      "type": "paragraph",
+      "text": "The frontend uses Content-Length to determine the full body size and forwards everything to the backend. The backend switches to chunked parsing. The attacker terminates the chunk body early (with 0\\r\\n\\r\\n), causing the backend to treat everything after it as a second, separate request."
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: vulnerable.com\nContent-Length: 49\nTransfer-Encoding: chunked\n\n0\n\nGET /admin HTTP/1.1\nHost: vulnerable.com\nX-Ignore: "
+    },
+    {
+      "type": "paragraph",
+      "text": "What happens:\n• Frontend reads 49 bytes by CL and forwards the full body.\n• Backend reads chunked: chunk size 0 = end of request #1.\n• Remaining bytes (GET /admin...) = beginning of request #2.\n• That smuggled prefix gets prepended to the next legitimate user's request."
+    },
+    {
+      "type": "note",
+      "noteType": "info",
+      "text": "The Content-Length value must equal the total byte count of the chunked portion including the 0\\r\\n\\r\\n terminator and the smuggled prefix. Off-by-one errors will cause the attack to fail silently."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "5.2 TE.CL — Frontend: Transfer-Encoding / Backend: Content-Length"
+    },
+    {
+      "type": "paragraph",
+      "text": "The frontend correctly processes the chunked body and terminates at the zero chunk. However, the backend only sees a Content-Length header and reads fewer bytes than were sent — the leftover bytes get prepended to the next connection's request."
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: vulnerable.com\nContent-Length: 3\nTransfer-Encoding: chunked\n\n8\nSMUGGLED\n0\n\nGET /admin HTTP/1.1\nHost: vulnerable.com\nContent-Length: 0\n\n"
+    },
+    {
+      "type": "paragraph",
+      "text": "What happens:\n• Frontend reads chunked: chunk of 8 bytes, then 0 = end. Full body forwarded.\n• Backend reads Content-Length: 3 → reads only \"8\\r\\n\" (3 bytes).\n• Everything after that (SMUGGLED\\r\\n0\\r\\n\\r\\nGET /admin...) is treated as the next request."
+    },
+    {
+      "type": "note",
+      "noteType": "warning",
+      "text": "TE.CL requires correct \\r\\n sequences after the 0 chunk terminator. Burp Repeater may auto-strip these or update Content-Length automatically — disable 'Update Content-Length' and send raw to avoid breaking the payload."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "5.3 TE.TE — Both Use Transfer-Encoding (Obfuscation)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Both the frontend and backend support Transfer-Encoding: chunked, so a standard smuggling attempt fails. However, if you send a malformed or obfuscated TE header, one side may reject it and fall back to Content-Length — creating a CL.TE or TE.CL condition."
+    },
+    {
+      "type": "paragraph",
+      "text": "Common obfuscation techniques (only one is needed):\n• Transfer-Encoding: xchunked\n• Transfer-Encoding: chunked (duplicate header)\n• Transfer-Encoding: CHUNKED\n• Transfer-Encoding:[tab]chunked\n• Transfer-Encoding : chunked (space before colon)\n• Transfer-Encoding: x\n• Transfer-Encoding: chu nked (space inside value)"
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: vulnerable.com\nContent-Length: 4\nTransfer-Encoding: chunked\nTransfer-Encoding: x\n\n5c\n...smuggled body...\n0\n\n"
+    },
+    {
+      "type": "paragraph",
+      "text": "Strategy: try each obfuscation variant. The server that rejects the malformed TE header falls back to CL, creating a desync. Use timing probes (see Section 6) to identify which combination works."
+    },
+    {
+      "type": "note",
+      "noteType": "info",
+      "text": "TE.TE is the hardest variant to detect automatically and is common in stacks that both implement chunked but have slightly different parsers (e.g., Nginx frontend + Node.js/Gunicorn backend)."
+    },
+
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. Detection Techniques"
+    },
+    {
+      "type": "paragraph",
+      "text": "Detection should always start with non-destructive timing probes before attempting differential response tests that may affect other users."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6.1 Timing-Delay Probes (Safe)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Send a request designed to cause a timeout if the target parses chunked encoding. A ~10s delay in the response is a strong signal."
+    },
+    {
+      "type": "paragraph",
+      "text": "CL.TE timing probe:"
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: vulnerable.com\nTransfer-Encoding: chunked\nContent-Length: 4\n\n1\nA\nX"
+    },
+    {
+      "type": "paragraph",
+      "text": "Frontend reads 4 bytes by CL and forwards. Backend reads chunked, gets chunk 'A', then expects more data after 'X' but nothing arrives → timeout."
+    },
+    {
+      "type": "paragraph",
+      "text": "TE.CL timing probe:"
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: vulnerable.com\nTransfer-Encoding: chunked\nContent-Length: 6\n\n0\n\nX"
+    },
+    {
+      "type": "paragraph",
+      "text": "Frontend reads chunk 0 = done and forwards. Backend reads Content-Length: 6 → gets '0\\r\\n\\r\\nX' (5 bytes) but expects 6 → waits for one more byte → timeout."
+    },
+    {
+      "type": "note",
+      "noteType": "success",
+      "text": "Timing probes are non-destructive. They don't inject into other users' requests. Always start here before any differential testing."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6.2 Differential Response Technique"
+    },
+    {
+      "type": "paragraph",
+      "text": "Send an attack request that smuggles a partial request prefix, then immediately send a normal follow-up request. If the follow-up returns an unexpected response (404, 403, redirect, or mangled content), the smuggle succeeded."
+    },
+    {
+      "type": "note",
+      "noteType": "warning",
+      "text": "This technique actively poisons the connection and may interfere with other users' requests on shared infrastructure. Only use in authorized testing environments or isolated labs."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6.3 Tooling"
+    },
+    {
+      "type": "paragraph",
+      "text": "• Burp Suite Pro + HTTP Request Smuggler extension: auto-detects CL.TE, TE.CL, TE.TE across all three variants with one click.\n• smuggler.py (defparam): open-source CLI tool, good for scripting into recon pipelines.\n• h2csmuggler: targets HTTP/2 to HTTP/1.1 downgrade paths.\n• Burp Repeater (manual): disable 'Update Content-Length' and set connection to 'Close' for raw payload control."
+    },
+
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. Exploitation Scenarios"
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.1 Bypass Front-End Security Controls"
+    },
+    {
+      "type": "paragraph",
+      "text": "WAFs, IP allowlists, and access-control proxies only inspect request #1. The smuggled request #2 reaches the backend directly, bypassing any header stripping, rate limiting, or path-based ACLs that the frontend enforces."
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: target.com\nContent-Length: 116\nTransfer-Encoding: chunked\n\n0\n\nGET /admin/deleteUser?id=1 HTTP/1.1\nHost: target.com\nContent-Type: application/x-www-form-urlencoded\nContent-Length: 0\n\n"
+    },
+    {
+      "type": "paragraph",
+      "text": "The frontend sees a POST to / (allowed). The backend sees GET /admin/deleteUser (restricted) as a separate request — with no WAF in between."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.2 Capturing Other Users' Requests"
+    },
+    {
+      "type": "paragraph",
+      "text": "If a storage endpoint exists (e.g., POST /comment), you can smuggle a partial body that causes the next real user's full request — including their Cookie, Authorization, or other sensitive headers — to be appended to your smuggled body and stored where you can read it."
+    },
+    {
+      "type": "paragraph",
+      "text": "Step 1: Smuggle a partial POST with a large Content-Length:\n• GET /post?postId=5 (outer request)\n• Smuggled: POST /comment HTTP/1.1\\r\\nContent-Length: 400\\r\\n\\r\\ncomment=\n\nStep 2: The next victim's browser sends any request (e.g., GET /profile with Cookie: session=abc123...).\n\nStep 3: Backend concatenates both → comment body becomes: \"comment=[victim's full request including Cookie header]\"\n\nStep 4: You read the captured request from the comment storage."
+    },
+    {
+      "type": "note",
+      "noteType": "warning",
+      "text": "The Content-Length in the smuggled request must be large enough to swallow the victim's headers. Too small and it gets cut off; too large and the backend keeps waiting. Tune based on average request size."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.3 Reflected XSS via Request Smuggling"
+    },
+    {
+      "type": "paragraph",
+      "text": "If any parameter reflects into a response without sanitization, you can smuggle a request containing the XSS payload. The next user's browser receives the poisoned response — no user interaction required, no need for them to click a link."
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": "POST / HTTP/1.1\nHost: target.com\nContent-Length: 150\nTransfer-Encoding: chunked\n\n0\n\nGET /?search=<script>alert(document.cookie)</script> HTTP/1.1\nHost: target.com\nContent-Length: 0\n\n"
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.4 Cache Poisoning via Smuggling"
+    },
+    {
+      "type": "paragraph",
+      "text": "Smuggle a request that causes the backend to respond with malicious content for a cacheable URL. The CDN or proxy caches the poisoned response and serves it to every subsequent visitor — turning a one-time exploit into a persistent attack."
+    },
+    {
+      "type": "paragraph",
+      "text": "The key is to smuggle a GET request for a high-traffic URL (e.g., /static/app.js) with a response that includes your payload. If the frontend caches by URL without verifying the origin request, the poisoned response gets cached globally."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7.5 HTTP/2 Downgrade Smuggling (H2.CL / H2.TE)"
+    },
+    {
+      "type": "paragraph",
+      "text": "When a frontend accepts HTTP/2 but downgrades to HTTP/1.1 before forwarding to the backend, the translation layer can introduce smuggling opportunities. HTTP/2 uses binary framing with no ambiguous body delimiters — but the translation to HTTP/1.1 reintroduces CL/TE. Injecting \\r\\n sequences or TE headers into HTTP/2 pseudo-header values can split requests on the backend."
+    },
+    {
+      "type": "code",
+      "language": "http",
+      "code": ":method POST\n:path /\n:authority target.com\ncontent-type application/x-www-form-urlencoded\ncontent-length 0\ntransfer-encoding chunked"
+    },
+    {
+      "type": "paragraph",
+      "text": "HTTP/2 normally strips TE headers, but some frontend implementations pass them through to the backend during downgrade. Tools like h2csmuggler and Burp's HTTP/2 support are required to test this variant."
+    },
+    {
+      "type": "note",
+      "noteType": "info",
+      "text": "H2.CL and H2.TE are increasingly common as CDNs (Cloudflare, AWS CloudFront) accept HTTP/2 on the frontend but relay to HTTP/1.1 backends. Always test both HTTP/1.1 and HTTP/2 paths separately."
+    },
+
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "8. Mitigation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "8.1 Disable Keep-Alive on the Backend Hop"
+    },
+    {
+      "type": "paragraph",
+      "text": "Use a new TCP connection per request between the frontend and backend. This eliminates connection sharing entirely — there is no shared state to poison. The downside is performance overhead from extra TCP handshakes. Acceptable for lower-traffic internal services."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "8.2 Use HTTP/2 End-to-End"
+    },
+    {
+      "type": "paragraph",
+      "text": "HTTP/2 uses binary framing with explicit stream IDs — there is no ambiguous boundary parsing based on CL or TE. Migrating the entire frontend-to-backend path to HTTP/2 eliminates the classic HRS surface. Critically: avoid H2 → H1 downgrade on the backend hop, as this reintroduces the vulnerability."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "8.3 Reject Ambiguous Requests at the Proxy"
+    },
+    {
+      "type": "paragraph",
+      "text": "If a request contains both Content-Length and Transfer-Encoding headers, reject it with 400 Bad Request. RFC 7230 explicitly permits this. Configure your proxy accordingly:"
+    },
+    {
+      "type": "code",
+      "language": "nginx",
+      "code": "# Nginx — reject if both CL and TE are present\nif ($http_transfer_encoding ~* \"chunked\") {\n    return 400;\n}"
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "8.4 Normalize Headers at the Frontend"
+    },
+    {
+      "type": "paragraph",
+      "text": "Have the frontend always rewrite the request to one canonical form before forwarding. Either strip Transfer-Encoding and set a correct Content-Length, or convert to chunked and remove CL. This removes the desync surface regardless of what the backend does."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "8.5 WAF Rules (Defense in Depth)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Block known TE obfuscation patterns (xchunked, duplicate headers, whitespace variants). Flag and drop requests containing both CL and TE. However, WAF rules alone are insufficient — they can be bypassed with novel obfuscation. Fix the architecture first; use WAF rules as a secondary layer."
+    },
+
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "8.6 Test Continuously"
+    },
+    {
+      "type": "paragraph",
+      "text": "Run Burp's HTTP Request Smuggler or smuggler.py against all endpoints after any infrastructure change. Proxies and load balancers receive updates that can silently introduce or remove parsing behaviors. Add HRS checks to your CI/CD security pipeline."
+    },
+
+    {
+      "type": "note",
+      "noteType": "danger",
+      "text": "HTTP Request Smuggling is an architectural vulnerability, not just a code bug. Patching a single header check is not enough. The frontend and backend must agree on parsing, or be completely isolated with per-request connections."
+    }
+  ]
+}
