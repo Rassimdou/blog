@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig = {
   output: "export",
-  basePath: "/blog",
-  assetPrefix: "/blog",
+  basePath: isDev ? undefined : "/blog",
+  assetPrefix: isDev ? undefined : "/blog",
   trailingSlash: true,
   typescript: {
     ignoreBuildErrors: true,

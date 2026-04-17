@@ -1,4 +1,4 @@
-import { Header } from "@/components/header";
+import { Header, HeaderIntro, HeaderTopRow } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { PostHeader } from "@/components/post-header";
 import { ContentRenderer } from "@/components/content-renderer";
@@ -75,7 +75,8 @@ export default async function ResearchArticlePage({ params }: PageProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <div className="mx-auto w-full max-w-4xl px-6 pt-8 md:px-10 md:pt-12">
-        <Header />
+        <HeaderTopRow sticky />
+        <HeaderIntro />
       </div>
 
       <main className="flex-1 w-full">

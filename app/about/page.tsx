@@ -5,7 +5,6 @@ import { Footer } from "@/components/footer";
 import { AnimatedWrapper } from "@/components/animated-wrapper";
 import { Github, Mail, Code, Bookmark } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 const skills = [
   { name: "Web Application Security" },
@@ -99,10 +98,6 @@ export default function AboutPage() {
 
             <AnimatedWrapper delay={800} className="md:col-span-2">
               <div className="editorial-surface flex flex-col items-center p-8 text-center sm:p-12">
-                   <div className="relative mb-6 p-4">
-                        <Image src="/blog/led_ring.png" alt="LED" width={200} height={200} className="h-24 w-24 rounded-sm object-cover opacity-80" />
-                        <div className="absolute inset-0 bg-primary/20 animate-ping" />
-                   </div>
                    <h2 className="display-type mb-4 text-3xl tracking-tight text-foreground">
                      Want to collaborate?
                     </h2>

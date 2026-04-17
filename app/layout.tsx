@@ -12,11 +12,8 @@ const sniglet = Sniglet({
 });
 
 export const metadata: Metadata = {
-  title: "rzyux | Security Notes",
+  title: "rzyux ",
   description: "Security Research and Writeups.",
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({
