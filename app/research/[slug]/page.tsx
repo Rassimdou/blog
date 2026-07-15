@@ -73,7 +73,7 @@ export default async function ResearchArticlePage({ params }: PageProps) {
   const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden">
+    <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
       <div className="mx-auto w-full max-w-4xl px-4 pt-6 sm:px-6 md:px-10 md:pt-12">
         <HeaderTopRow sticky />
         <HeaderIntro />
