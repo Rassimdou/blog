@@ -133,8 +133,12 @@
   a {
     @apply transition-colors duration-200;
   }
+  strong, b {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-weight: 700;
+  }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-sniglet), "Sniglet", cursive;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   }
 }
 
@@ -184,7 +188,7 @@
 }
 
 .display-type {
-  font-family: var(--font-sniglet), "Sniglet", cursive;
+  font-family: var(--font-sniglet), "Sniglet", cursive !important;
 }
 
 ::-webkit-scrollbar {

@@ -43,7 +43,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
       <h3 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">
         Table of Contents
       </h3>

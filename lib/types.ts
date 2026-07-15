@@ -1,11 +1,12 @@
 export interface ContentBlock {
-  type: "heading" | "paragraph" | "code" | "flag" | "image" | "note";
+  type: "heading" | "paragraph" | "code" | "flag" | "image" | "note" | "diagram";
   level?: number;
   text?: string;
   language?: string;
   code?: string;
   src?: string;
   alt?: string;
+  steps?: { title: string; description: string }[];
 }
 
 export interface Post {

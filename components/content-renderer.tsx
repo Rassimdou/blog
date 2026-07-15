@@ -4,9 +4,91 @@ import { CodeBlock } from "./code-block";
 import { AnimatedWrapper } from "./animated-wrapper";
 import type { ContentBlock } from "@/lib/types";
 import { AlertTriangle, CheckCircle, Flag, Info } from "lucide-react";
+import Link from "next/link";
+import React from "react";
 
 interface ContentRendererProps {
   content: ContentBlock[];
+}
+
+function renderFormattedText(text: string): React.ReactNode {
+  if (!text) return "";
+
+  // Matches [text](url), **bold**, *italic*, `inline code`
+  const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+
+    if (match[1]) {
+      // Link
+      const label = match[1];
+      const url = match[2];
+      const isExternal = url.startsWith("http://") || url.startsWith("https://") || url.startsWith("mailto:");
+
+      if (isExternal) {
+        parts.push(
+          <a
+            key={match.index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-medium transition-colors"
+          >
+            {renderFormattedText(label)}
+          </a>
+        );
+      } else {
+        parts.push(
+          <Link
+            key={match.index}
+            href={url}
+            className="text-primary hover:underline font-medium transition-colors"
+          >
+            {renderFormattedText(label)}
+          </Link>
+        );
+      }
+    } else if (match[3]) {
+      // Bold
+      parts.push(
+        <strong key={match.index} className="font-semibold text-foreground">
+          {renderFormattedText(match[3])}
+        </strong>
+      );
+    } else if (match[4]) {
+      // Italic
+      parts.push(
+        <em key={match.index} className="italic text-foreground/90">
+          {renderFormattedText(match[4])}
+        </em>
+      );
+    } else if (match[5]) {
+      // Inline code
+      parts.push(
+        <code
+          key={match.index}
+          className="rounded bg-muted px-1.5 py-0.5 text-[0.9em] font-mono text-foreground border border-border/40"
+        >
+          {match[5]}
+        </code>
+      );
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts.length > 0 ? <>{parts}</> : text;
 }
 
 export function ContentRenderer({ content }: ContentRendererProps) {
@@ -24,7 +106,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
                 <AnimatedWrapper key={index} delay={delay}>
                   <h2 id={id} className="display-type group mb-4 mt-14 flex items-center gap-3 text-2xl leading-tight text-foreground first:mt-0 sm:text-3xl scroll-mt-24">
                     <span className="h-px w-10 bg-border transition-all duration-300 group-hover:w-14 group-hover:bg-primary" />
-                    {block.text}
+                    {renderFormattedText(block.text || "")}
                   </h2>
                 </AnimatedWrapper>
               );
@@ -33,7 +115,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
               return (
                 <AnimatedWrapper key={index} delay={delay}>
                   <h3 id={id} className="display-type mb-3 mt-10 text-xl text-foreground scroll-mt-24">
-                    {block.text}
+                    {renderFormattedText(block.text || "")}
                   </h3>
                 </AnimatedWrapper>
               );
@@ -41,7 +123,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             return (
               <AnimatedWrapper key={index} delay={delay}>
                 <h4 id={id} className="mb-2 mt-8 text-lg text-foreground scroll-mt-24">
-                  {block.text}
+                  {renderFormattedText(block.text || "")}
                 </h4>
               </AnimatedWrapper>
             );
@@ -51,7 +133,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             return (
               <AnimatedWrapper key={index} delay={delay}>
                 <p className="my-5 whitespace-pre-wrap text-[1.03rem] leading-8 text-muted-foreground">
-                  {block.text}
+                  {renderFormattedText(block.text || "")}
                 </p>
               </AnimatedWrapper>
             );
@@ -144,7 +226,37 @@ export function ContentRenderer({ content }: ContentRendererProps) {
               <AnimatedWrapper key={index} delay={delay}>
                 <div className={`my-6 flex gap-4 rounded-sm border ${style.border} ${style.bg} p-4`}>
                   <NoteIcon className={`h-5 w-5 shrink-0 ${style.iconColor}`} />
-                  <p className="text-sm leading-7 text-muted-foreground">{block.text}</p>
+                  <p className="text-sm leading-7 text-muted-foreground">
+                    {renderFormattedText(block.text || "")}
+                  </p>
+                </div>
+              </AnimatedWrapper>
+            );
+          }
+
+          case "diagram": {
+            const diagramSteps = block.steps || [];
+            return (
+              <AnimatedWrapper key={index} delay={delay}>
+                <div className="my-12 relative pl-8 border-l border-border/60 space-y-8 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary before:to-muted">
+                  {diagramSteps.map((step, stepIdx) => (
+                    <div key={stepIdx} className="relative group">
+                      {/* Bullet node centered on border line */}
+                      <div className="absolute -left-[42px] top-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary bg-background shadow-[0_0_8px_rgba(var(--primary),0.5)] transition-all duration-300 group-hover:scale-125 group-hover:bg-primary" />
+                      
+                      <div className="glass-panel p-5 transition-all duration-300 hover:border-primary/40 hover:bg-card/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+                        <h4 className="font-semibold text-foreground text-base mb-2 flex items-center gap-2">
+                          <span className="text-primary text-xs font-mono px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20">
+                            Step {stepIdx + 1}
+                          </span>
+                          {step.title}
+                        </h4>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </AnimatedWrapper>
             );
