@@ -73,8 +73,8 @@ export default async function ResearchArticlePage({ params }: PageProps) {
   const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <div className="mx-auto w-full max-w-4xl px-6 pt-8 md:px-10 md:pt-12">
+    <div className="flex min-h-screen flex-col overflow-x-hidden">
+      <div className="mx-auto w-full max-w-4xl px-4 pt-6 sm:px-6 md:px-10 md:pt-12">
         <HeaderTopRow sticky />
         <HeaderIntro />
       </div>
@@ -82,10 +82,10 @@ export default async function ResearchArticlePage({ params }: PageProps) {
       <main className="flex-1 w-full">
         <PostHeader post={post} />
 
-        <article className="py-12 md:py-16">
-          <div className="mx-auto max-w-[1400px] px-4 lg:grid lg:grid-cols-[1fr_minmax(auto,48rem)_1fr] lg:gap-8">
+        <article className="overflow-x-hidden py-8 md:py-16">
+          <div className="mx-auto max-w-[1400px] px-3 sm:px-4 lg:grid lg:grid-cols-[1fr_minmax(auto,48rem)_1fr] lg:gap-8">
             <div className="hidden lg:block" />
-            <div className="min-w-0 max-w-3xl mx-auto w-full">
+            <div className="min-w-0 w-full mx-auto max-w-3xl">
             <ContentRenderer content={post.content} />
 
             {/* Post navigation */}
@@ -133,7 +133,7 @@ export default async function ResearchArticlePage({ params }: PageProps) {
         </article>
       </main>
 
-      <div className="mx-auto w-full max-w-4xl px-6 pb-12 md:px-10 md:pb-16">
+      <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 md:px-10 md:pb-16">
         <Footer />
       </div>
     </div>

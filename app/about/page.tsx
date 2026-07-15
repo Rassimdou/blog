@@ -22,13 +22,13 @@ export default function AboutPage() {
       <Header />
 
       <main className="flex-1 space-y-8">
-        <section className="editorial-surface relative overflow-hidden px-6 py-16 text-center md:px-10 md:py-24">
+        <section className="editorial-surface relative overflow-hidden px-4 py-10 text-center sm:px-6 sm:py-16 md:px-10 md:py-24">
             <AnimatedWrapper delay={200} className="relative z-10">
                 <span className="eyebrow mb-6 block">0x</span>
-                <h1 className="display-type mb-6 text-4xl tracking-[-0.05em] text-foreground sm:text-6xl md:text-7xl">
+                <h1 className="display-type mb-6 text-4xl tracking-[-0.04em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
                   About Me
                 </h1>
-                <p className="mx-auto mb-12 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
+                <p className="mx-auto mb-10 max-w-2xl text-base leading-8 text-muted-foreground sm:mb-12 sm:text-lg">
                    Security researcher and CTF enthusiast. I break systems to understand them, then write down the useful parts clearly enough for someone else to follow.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4">
@@ -54,8 +54,8 @@ export default function AboutPage() {
 
         <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <AnimatedWrapper delay={400}>
-              <div className="editorial-surface h-full p-8">
-                <div className="mb-8 flex items-center gap-3 border-b border-border/70 pb-4">
+              <div className="editorial-surface h-full p-5 sm:p-8">
+                <div className="mb-6 sm:mb-8 flex items-center gap-3 border-b border-border/70 pb-4">
                      <Code className="h-5 w-5 text-primary" />
                     <h2 className="display-type text-lg text-foreground">
                       Skills & Focus Areas
@@ -75,8 +75,8 @@ export default function AboutPage() {
             </AnimatedWrapper>
 
             <AnimatedWrapper delay={600}>
-              <div className="editorial-surface h-full p-8">
-                <div className="mb-8 flex items-center gap-3 border-b border-border/70 pb-4">
+              <div className="editorial-surface h-full p-5 sm:p-8">
+                <div className="mb-6 sm:mb-8 flex items-center gap-3 border-b border-border/70 pb-4">
                     <Bookmark className="h-5 w-5 text-primary" />
                     <h2 className="display-type text-lg text-foreground">
                       Certifications

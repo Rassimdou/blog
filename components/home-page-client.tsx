@@ -20,9 +20,9 @@ export function HomePageClient({ initialPosts }: HomePageClientProps) {
       <Header />
 
       <main className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.85fr)] lg:gap-8">
-        <section className="editorial-surface p-7 md:p-10">
+        <section className="editorial-surface p-5 sm:p-7 md:p-10">
           <p className="eyebrow mb-4">Latest writing</p>
-          <h2 className="display-type max-w-2xl text-4xl leading-tight tracking-[-0.04em] text-foreground sm:text-5xl md:text-[3.45rem]">
+          <h2 className="display-type max-w-2xl text-2xl leading-tight tracking-[-0.03em] text-foreground sm:text-4xl md:text-[3rem]">
             Thoughts on security, challenge solving, and the details worth documenting.
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground">

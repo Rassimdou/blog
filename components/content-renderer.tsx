@@ -132,7 +132,7 @@ export function ContentRenderer({ content }: ContentRendererProps) {
           case "paragraph":
             return (
               <AnimatedWrapper key={index} delay={delay}>
-                <p className="my-5 whitespace-pre-wrap text-[1.03rem] leading-8 text-muted-foreground">
+                <p className="my-5 break-words whitespace-pre-wrap text-[1.03rem] leading-8 text-muted-foreground">
                   {renderFormattedText(block.text || "")}
                 </p>
               </AnimatedWrapper>
@@ -238,20 +238,25 @@ export function ContentRenderer({ content }: ContentRendererProps) {
             const diagramSteps = block.steps || [];
             return (
               <AnimatedWrapper key={index} delay={delay}>
-                <div className="my-12 relative pl-8 border-l border-border/60 space-y-8 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary before:to-muted">
+                <div className="my-10 space-y-4">
                   {diagramSteps.map((step, stepIdx) => (
-                    <div key={stepIdx} className="relative group">
-                      {/* Bullet node centered on border line */}
-                      <div className="absolute -left-[42px] top-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary bg-background shadow-[0_0_8px_rgba(var(--primary),0.5)] transition-all duration-300 group-hover:scale-125 group-hover:bg-primary" />
-                      
-                      <div className="glass-panel p-5 transition-all duration-300 hover:border-primary/40 hover:bg-card/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
-                        <h4 className="font-semibold text-foreground text-base mb-2 flex items-center gap-2">
-                          <span className="text-primary text-xs font-mono px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20">
-                            Step {stepIdx + 1}
-                          </span>
+                    <div key={stepIdx} className="group flex gap-4">
+                      {/* Timeline column */}
+                      <div className="flex flex-col items-center shrink-0">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary text-xs font-bold font-mono transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                          {stepIdx + 1}
+                        </div>
+                        {stepIdx < diagramSteps.length - 1 && (
+                          <div className="mt-1 w-px flex-1 min-h-[2rem] bg-gradient-to-b from-primary/60 to-border/30" />
+                        )}
+                      </div>
+
+                      {/* Card */}
+                      <div className="glass-panel mb-4 flex-1 min-w-0 p-4 transition-all duration-300 hover:border-primary/40 hover:bg-card/30">
+                        <h4 className="font-semibold text-foreground text-sm sm:text-base mb-1 break-words">
                           {step.title}
                         </h4>
-                        <p className="text-sm leading-6 text-muted-foreground">
+                        <p className="text-sm leading-6 text-muted-foreground break-words">
                           {step.description}
                         </p>
                       </div>

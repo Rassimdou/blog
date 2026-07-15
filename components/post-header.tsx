@@ -14,8 +14,8 @@ export function PostHeader({ post }: PostHeaderProps) {
   const isCtf = post.category === "ctf";
 
   return (
-    <section className="px-6 pt-2 md:px-10">
-      <div className="editorial-surface mx-auto max-w-4xl px-6 py-10 md:px-10 md:py-12">
+    <section className="px-3 pt-2 sm:px-6 md:px-10">
+      <div className="editorial-surface mx-auto max-w-4xl px-4 py-7 sm:px-6 sm:py-10 md:px-10 md:py-12">
         <AnimatedWrapper className="clinical-slide">
           <Link
             href={isCtf ? "/writeups" : "/research"}
@@ -49,7 +49,7 @@ export function PostHeader({ post }: PostHeaderProps) {
         </AnimatedWrapper>
 
         <AnimatedWrapper className="clinical-slide" delay={220}>
-          <h1 className="display-type max-w-3xl text-4xl leading-tight tracking-[-0.04em] text-foreground sm:text-5xl md:text-6xl">
+          <h1 className="display-type max-w-3xl text-2xl leading-tight tracking-[-0.03em] text-foreground sm:text-3xl md:text-5xl lg:text-6xl">
             {post.title}
           </h1>
         </AnimatedWrapper>
