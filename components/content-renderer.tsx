@@ -168,8 +168,11 @@ export function ContentRenderer({ content }: ContentRendererProps) {
 
           case "image": {
             const imgSrc = block.src || "/placeholder.svg";
+            // Raw <img> tags don't get the basePath auto-prepended, so we add it
+            // manually — but only when next.config actually sets one (production).
+            const basePath = process.env.NODE_ENV === "development" ? "" : "/blog";
             const finalSrc =
-              imgSrc.startsWith("/") && !imgSrc.startsWith("//") ? `/blog${imgSrc}` : imgSrc;
+              imgSrc.startsWith("/") && !imgSrc.startsWith("//") ? `${basePath}${imgSrc}` : imgSrc;
 
             return (
               <AnimatedWrapper key={index} delay={delay} animation="scale">
