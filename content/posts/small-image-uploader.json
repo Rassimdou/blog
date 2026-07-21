@@ -10,9 +10,18 @@
   "summary": "A client-side challenge that looks like a plain image uploader. Two endpoints that are both dead ends on their own get chained through a client-side path traversal into an innerHTML sink, turning uploaded file bytes into stored XSS that steals the admin bot's flag cookie.",
   "content": [
     {
+      "type": "paragraph",
+      "text": "**Small Image Uploader** — Daily AlpacaHack · Topic: Client-Side · Hard (6.5) · 75 solves"
+    },
+    {
       "type": "image",
       "src": "/screenshots/small-image-uploader/img7.png",
-      "alt": "Small Image Uploader — Daily AlpacaHack, Topic: Client-Side, Hard (6.5), 75 solves"
+      "alt": ""
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "TL;DR"
     },
     {
       "type": "paragraph",
